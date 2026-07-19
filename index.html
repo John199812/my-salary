@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工時與薪資預估對帳工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: #334155;
+            margin: 0;
+            padding: 16px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+        h2, h3 {
+            margin-top: 0;
+            color: #1e293b;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-danger { background: var(--danger-color); color: white; }
+        .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
+        
+        /* 歷史列表樣式 */
+        .shift-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .shift-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .shift-meta span {
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-right: 6px;
+        }
+        .shift-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+        .shift-actions button { padding: 6px; font-size: 13px; }
+
+        /* 財務總結區樣式 */
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .summary-row.total {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .net-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-top: 12px;
+        }
+        .net-amount {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--success-color);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 1. 參數設定區 -->
+    <div class="card">
+        <h3>🛠️ 薪資參數設定 (可自由調整)</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>正職基本時薪 (AUD)</label>
+                <input type="number" id="cfg-base-rate" value="26.74" step="0.01" onchange="calculateCurrentShift()">
+            </div>
+            <div class="form-group">
+                <label>Casual 加給 (%)</label>
+                <input type="number" id="cfg-casual-loading" value="25" onchange="calculateCurrentShift()">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>夜班加給 (%)</label>
+                <input type="number" id="cfg-night-loading" value="25" onchange="calculateCurrentShift()">
+            </div>
+            <div class="form-group">
+                <label>預估背包客稅率 (%)</label>
+                <input type="number" id="cfg-tax-rate" value="12" onchange="updateSummary()">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>每日 PPE 工具補助津貼 (AUD)</label>
+            <input type="number" id="cfg-ppe-allowance" value="5.00" step="0.01" onchange="updateSummary()">
+        </div>
+    </div>
+
+    <!-- 2. 工時輸入區 -->
+    <div class="card">
+        <h3>📅 新增當日工時排班</h3>
+        <div class="form-group">
+            <label>工作日期</label>
+            <input type="date" id="input-date">
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>上班時間</label>
+                <input type="time" id="input-start" value="23:50" onchange="calculateCurrentShift()">
+            </div>
+            <div class="form-group">
+                <label>下班時間</label>
+                <input type="time" id="input-end" value="07:00" onchange="calculateCurrentShift()">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>扣除用餐/Smoko時間 (分)</label>
+                <input type="number" id="input-smoko" value="60" onchange="calculateCurrentShift()">
+            </div>
+            <div class="form-group">
+                <label>班別類型</label>
+                <select id="input-shift-type" onchange="calculateCurrentShift()">
+                    <option value="night">夜班 (有加給)</option>
+                    <option value="normal">白班 (無加給)</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-top: 8px; font-size: 14px; color: #64748b;" id="shift-preview">
+            計算預覽：計薪時數 6.67 小時
+        </div>
+        <button class="btn-primary" style="margin-top: 12px;" onclick="addShift()">加入本週班表</button>
+    </div>
+
+    <!-- 3. 本週班表列表 -->
+    <div class="card">
+        <h3>📋 本週已登錄班表</h3>
+        <div id="shifts-list">
+            <!-- 動態插入 -->
+        </div>
+    </div>
+
+    <!-- 4. 財務預估總結 -->
+    <div class="card">
+        <h3>📊 本週整體財務預估總結</h3>
+        <div class="summary-row">
+            <span>本週班表薪資小計 (AUD)</span>
+            <span id="sum-gross-pay">$0.00</span>
+        </div>
+        <div class="summary-row">
+            <span>PPE 工具補助津貼 (AUD)</span>
+            <span id="sum-ppe">$0.00</span>
+        </div>
+        <div class="summary-row total">
+            <span>本週預估總薪資 (稅前) (AUD)</span>
+            <span id="sum-total-gross">$0.00</span>
+        </div>
+        <div class="summary-row" style="color: var(--danger-color);">
+            <span>預估扣稅扣繳 <span id="summary-tax-rate">12</span>% (AUD)</span>
+            <span id="sum-tax">-$0.00</span>
+        </div>
+        
+        <div class="net-box">
+            <div style="font-weight: 600;">本週實領預估 (稅後淨所得)</div>
+            <div class="net-amount">🇦🇺 <span id="sum-net-pay">$0.00</span> <span style="font-size:16px; font-weight:normal; color:#64748b;">AUD</span></div>
+        </div>
+    </div>
+
+    <!-- 5. 備份與傳輸管理 -->
+    <div class="card">
+        <h3>💾 資料備份與傳輸管理</h3>
+        <div class="grid-2" style="margin-bottom: 10px;">
+            <button class="btn-outline" onclick="exportJSON()">匯出本週 JSON</button>
+            <button class="btn-danger" style="background:#fecdd3; color:#9f1239;" onclick="document.getElementById('import-file').click()">匯入備份 JSON</button>
+            <input type="file" id="import-file" style="display:none;" accept=".json" onchange="importJSON(event)">
+        </div>
+        <button class="btn-success" onclick="exportExcel()">📊 匯出每週 XLSX (Excel 對帳單)</button>
+    </div>
+</div>
+
+<script>
+    // 初始化當天日期為今天
+    document.getElementById('input-date').valueAsDate = new Date();
+
+    let shifts = JSON.parse(localStorage.getItem('my_shifts')) || [];
+
+    function calculateCurrentShift() {
+        const start = document.getElementById('input-start').value;
+        const end = document.getElementById('input-end').value;
+        const smoko = parseInt(document.getElementById('input-smoko').value) || 0;
+        
+        if(!start || !end) return 0;
+
+        let [sH, sM] = start.split(':').map(Number);
+        let [eH, eM] = end.split(':').map(Number);
+        
+        let startMins = sH * 60 + sM;
+        let endMins = eH * 60 + eM;
+        
+        if (endMins <= startMins) {
+            endMins += 24 * 60; // 跨夜計算
+        }
+        
+        let totalMinutes = endMins - startMins;
+        let paidMinutes = totalMinutes - smoko;
+        if(paidMinutes < 0) paidMinutes = 0;
+        
+        let paidHours = (paidMinutes / 60).toFixed(2);
+        document.getElementById('shift-preview').innerText = `計算預覽：計薪時數 ${paidHours} 小時`;
+        return { totalMinutes, paidMinutes, paidHours };
+    }
+
+    function addShift() {
+        const date = document.getElementById('input-date').value;
+        const start = document.getElementById('input-start').value;
+        const end = document.getElementById('input-end').value;
+        const smoko = parseInt(document.getElementById('input-smoko').value) || 0;
+        const shiftType = document.getElementById('input-shift-type').value;
+
+        if(!date) return alert('請選擇日期');
+
+        const { totalMinutes, paidMinutes, paidHours } = calculateCurrentShift();
+
+        // 讀取當前設定參數
+        const baseRate = parseFloat(document.getElementById('cfg-base-rate').value);
+        const casualLoadPercent = parseFloat(document.getElementById('cfg-casual-loading').value) / 100;
+        const nightLoadPercent = parseFloat(document.getElementById('cfg-night-loading').value) / 100;
+
+        // 薪資計算模式 (完全吻合你的 Payslip 邏輯)
+        const hourFactor = paidMinutes / 60;
+        const basePay = baseRate * hourFactor;
+        const casualPay = basePay * casualLoadPercent;
+        const shiftPay = shiftType === 'night' ? (basePay * nightLoadPercent) : 0;
+        const grossPay = basePay + casualPay + shiftPay;
+
+        const newShift = {
+            id: Date.now(),
+            workDate: date,
+            startTime: start,
+            endTime: end,
+            totalMinutes,
+            smokoCount: smoko === 60 ? 2 : 1, 
+            smokoDeductMinutes: smoko,
+            paidMinutes,
+            paidHours,
+            basePay: Math.round(basePay * 100) / 100,
+            casualPay: Math.round(casualPay * 100) / 100,
+            shiftPay: Math.round(shiftPay * 100) / 100,
+            grossPay: Math.round(grossPay * 100) / 100,
+            shiftType: shiftType
+        };
+
+        shifts.push(newShift);
+        // 按日期排序
+        shifts.sort((a,b) => new Date(a.workDate) - new Date(b.workDate));
+        
+        saveAndRefresh();
+    }
+
+    function deleteShift(id) {
+        shifts = shifts.filter(s => s.id !== id);
+        saveAndRefresh();
+    }
+
+    function saveAndRefresh() {
+        localStorage.setItem('my_shifts', JSON.stringify(shifts));
+        renderShifts();
+        updateSummary();
+    }
+
+    function renderShifts() {
+        const listContainer = document.getElementById('shifts-list');
+        listContainer.innerHTML = '';
+        
+        if(shifts.length === 0) {
+            listContainer.innerHTML = '<div style="color:#94a3b8; text-align:center; padding:20px;">暫無班表紀錄</div>';
+            return;
+        }
+
+        shifts.forEach(shift => {
+            const dayOfWeek = new Date(shift.workDate).toLocaleDateString('zh-TW', {weekday: 'short'});
+            const item = document.createElement('div');
+            item.className = 'shift-item';
+            item.innerHTML = `
+                <div class="shift-header">
+                    <span>${shift.workDate} (${dayOfWeek})</span>
+                    <span style="color:var(--primary-color)">$${shift.grossPay.toFixed(2)}</span>
+                </div>
+                <div style="font-size:14px; margin-bottom:8px;">⏰ ${shift.startTime} - ${shift.endTime}</div>
+                <div class="shift-meta">
+                    <span>計薪 ${shift.paidHours} 小時</span>
+                    <span>${shift.shiftType === 'night' ? '夜班' : '白班'}</span>
+                </div>
+                <div class="shift-actions">
+                    <button class="btn-outline" style="padding:4px 8px;" onclick="alert('請直接刪除後重新新增即可修改')">修改工時</button>
+                    <button class="btn-danger" style="padding:4px 8px; background:none; color:var(--danger-color); border:1px solid var(--danger-color);" onclick="deleteShift(${shift.id})">移除</button>
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    function updateSummary() {
+        const taxRatePercent = parseFloat(document.getElementById('cfg-tax-rate').value);
+        const ppeRate = parseFloat(document.getElementById('cfg-ppe-allowance').value);
+        document.getElementById('summary-tax-rate').innerText = taxRatePercent;
+
+        let totalGross = 0;
+        let totalDays = shifts.length;
+
+        shifts.forEach(s => {
+            totalGross += s.grossPay;
+        });
+
+        let totalPpe = totalDays * ppeRate;
+        let finalGross = totalGross + totalPpe;
+        let taxDeduction = totalGross * (taxRatePercent / 100); // 補助通常免稅或依規定，此處依主表邏輯以班表薪資扣稅
+        let netPay = finalGross - taxDeduction;
+
+        document.getElementById('sum-gross-pay').innerText = `$${totalGross.toFixed(2)}`;
+        document.getElementById('sum-ppe').innerText = `$${totalPpe.toFixed(2)}`;
+        document.getElementById('sum-total-gross').innerText = `$${finalGross.toFixed(2)}`;
+        document.getElementById('sum-tax').innerText = `-$${taxDeduction.toFixed(2)}`;
+        document.getElementById('sum-net-pay').innerText = `$${netPay.toFixed(2)}`;
+    }
+
+    // 匯出 JSON
+    function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(shifts, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `shifts-export-${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    // 匯入 JSON
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if(Array.isArray(imported)) {
+                    shifts = imported;
+                    saveAndRefresh();
+                    alert('匯入成功！');
+                } else {
+                    alert('檔案格式不正確');
+                }
+            } catch(err) {
+                alert('讀取檔案失敗');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // 匯出 Excel
+    function exportExcel() {
+        if(shifts.length === 0) return alert('目前沒有資料可以匯出');
+        const worksheetData = shifts.map(s => ({
+            "日期": s.workDate,
+            "上班時間": s.startTime,
+            "下班時間": s.endTime,
+            "扣除休息(分)": s.smokoDeductMinutes,
+            "計薪時數": s.paidHours,
+            "班別": s.shiftType === 'night' ? '夜班' : '白班',
+            "基本薪資(AUD)": s.basePay,
+            "Casual加給(AUD)": s.casualPay,
+            "班別津貼(AUD)": s.shiftPay,
+            "稅前薪資小計": s.grossPay
+        }));
+        
+        const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "每週工時對帳");
+        XLSX.writeFile(workbook, `澳洲打工薪資對帳單-${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // 網頁載入時初始化
+    calculateCurrentShift();
+    renderShifts();
+    updateSummary();
+</script>
+
+</body>
+</html>
