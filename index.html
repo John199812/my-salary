@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>薪資計算與排班預估 Pro</title>
+    <title>薪資計算與排班預估 Pro Max</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -12,167 +12,69 @@
             --card-bg: #ffffff;
             --text: #1e293b;
             --border: #e2e8f0;
+            --green-bg: #f0fdf4;
+            --green-text: #166534;
+            --green-border: #bbf7d0;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
             padding: 16px;
-            padding-bottom: 40px;
+            padding-bottom: 60px;
         }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        h1 {
-            font-size: 20px;
-            margin: 0;
-        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        h1 { font-size: 20px; margin: 0; }
         .currency-btn {
-            background: #ffffff;
-            border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            background: #ffffff; border: 1px solid var(--border); padding: 6px 12px;
+            border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;
         }
-        .card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            margin-bottom: 16px;
-        }
-        .section-title {
-            font-size: 15px;
-            font-weight: bold;
-            margin-top: 0;
-            margin-bottom: 12px;
-            color: #64748b;
-        }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 16px; }
+        .section-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 12px; color: #475569; }
+        
         /* 日曆樣式 */
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            text-align: center;
-        }
-        .weekday {
-            font-size: 12px;
-            font-weight: bold;
-            color: #94a3b8;
-            padding: 4px 0;
-        }
-        .day {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            position: relative;
-            font-weight: 500;
-        }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .weekday { font-size: 12px; font-weight: bold; color: #94a3b8; padding: 4px 0; }
+        .day { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; border-radius: 8px; cursor: pointer; position: relative; font-weight: 500; }
         .day:hover { background: #f1f5f9; }
-        .day.selected {
-            background: var(--primary) !important;
-            color: white;
-        }
-        .day.has-shift::after {
-            content: '';
-            position: absolute;
-            bottom: 4px;
-            width: 4px;
-            height: 4px;
-            background: #f97316;
-            border-radius: 50%;
-        }
-        .day.selected.has-shift::after {
-            background: white;
-        }
-        .day.other-month {
-            color: #cbd5e1;
-        }
-        /* 表單輸入 */
-        .form-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
+        .day.selected { background: var(--primary) !important; color: white; }
+        .day.has-shift::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: #f97316; border-radius: 50%; }
+        .day.selected.has-shift::after { background: white; }
+        .day.other-month { color: #cbd5e1; }
+
+        /* 表單 */
+        .form-group { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
         .form-group:last-child { border-bottom: none; }
         label { font-size: 14px; font-weight: 500; }
-        input, select {
-            border: 1px solid var(--border);
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: right;
-            width: 100px;
-        }
-        /* 按鈕樣式 */
-        .btn-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-        }
+        input, select { border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: right; width: 110px; }
+        
+        /* 按鈕 */
+        .btn-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-        /* 明細與總計 */
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            font-size: 14px;
-        }
-        .total-row {
-            border-top: 2px solid var(--border);
-            margin-top: 8px;
-            padding-top: 12px;
-            font-weight: bold;
-            font-size: 16px;
-        }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        
+        /* 明細清單 */
+        .empty-text { color: #94a3b8; text-align: center; padding: 20px 0; font-size: 14px; line-height: 1.6; }
+        .shift-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
+        
+        /* 財務統計 */
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+        .total-row { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 8px; font-weight: 500; }
+        
+        /* 綠色實領框 */
+        .net-pay-box { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 12px; padding: 12px; margin-top: 12px; color: var(--green-text); }
+        .net-pay-title { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
+        .net-pay-amount { font-size: 24px; font-weight: 900; display: flex; align-items: center; gap: 6px; }
+        
+        /* 折疊選單 */
+        .accordion-header { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .accordion-content { display: none; padding: 12px; background: #fff; border: 1px solid var(--border); border-top: none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        textarea { width: 100%; height: 80px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; box-sizing: border-box; font-size: 12px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -185,40 +87,51 @@
         </button>
     </div>
 
-    <!-- 1. 設定區 -->
+    <!-- 1. 基礎設定 -->
     <div class="card">
-        <div class="section-title">基礎薪資設定</div>
+        <div class="section-title">薪責與津貼設定</div>
         <div class="form-group">
             <label>基礎時薪 (Base Rate)</label>
-            <input type="number" id="base-rate" value="25.00" step="0.1" onchange="calculateSalary()">
+            <input type="number" id="base-rate" value="25.00" step="0.1" onchange="calculateAll()">
         </div>
         <div class="form-group">
             <label>Casual 加給 (%)</label>
-            <input type="number" id="casual-loading" value="25" onchange="calculateSalary()">
+            <input type="number" id="casual-loading" value="25" onchange="calculateAll()">
         </div>
         <div class="form-group">
-            <label>背包客預估稅率</label>
-            <select id="tax-rate" onchange="calculateSalary()">
-                <option value="15" selected>15% (低於 $45k)</option>
-                <option value="32.5">32.5% (高於 $45k)</option>
+            <label>星期日加成率 (%)</label>
+            <input type="number" id="sunday-loading" value="75" onchange="calculateAll()">
+        </div>
+        <div class="form-group">
+            <label>Double 雙倍薪資 (%)</label>
+            <input type="number" id="double-loading" value="100" onchange="calculateAll()">
+        </div>
+        <div class="form-group">
+            <label>PPE 工具每週津貼</label>
+            <input type="number" id="ppe-allowance" value="5.00" step="0.5" onchange="calculateAll()">
+        </div>
+        <div class="form-group">
+            <label>預估扣稅扣繳</label>
+            <select id="tax-rate" onchange="calculateAll()">
+                <option value="15" selected>15% (背包客低於45k)</option>
+                <option value="32.5">32.5% (超過45k)</option>
+                <option value="12">12% (自訂舊稅率)</option>
                 <option value="0">0% (不扣稅)</option>
             </select>
         </div>
     </div>
 
-    <!-- 2. 日曆選擇 -->
+    <!-- 2. 日曆 -->
     <div class="card">
         <div class="calendar-header">
             <button onclick="changeMonth(-1)" style="border:none;background:none;cursor:pointer;font-weight:bold;">&lt;</button>
             <span id="calendar-month-year" style="font-weight: bold;">2026年7月</span>
             <button onclick="changeMonth(1)" style="border:none;background:none;cursor:pointer;font-weight:bold;">&gt;</button>
         </div>
-        <div class="calendar-grid" id="calendar-grid">
-            <!-- 日曆動態渲染 -->
-        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
-    <!-- 3. 單日排班設定 -->
+    <!-- 3. 排班操作 -->
     <div class="card">
         <div class="section-title">當日排班操作 (<span id="selected-date-str">請選擇日期</span>)</div>
         <div class="form-group">
@@ -227,6 +140,8 @@
                 <option value="none">放假 / 未排班</option>
                 <option value="day">白班 (一般費率)</option>
                 <option value="night">夜班 (加成費率)</option>
+                <option value="sunday">星期日班表</option>
+                <option value="double">國定假日 Double</option>
             </select>
         </div>
         <div id="shift-time-inputs" style="display: none;">
@@ -239,17 +154,13 @@
                 <input type="time" id="end-time" value="14:30">
             </div>
             <div class="form-group">
-                <label>扣除不計薪 Smoko (分鐘)</label>
+                <label>扣除 Smoko (分鐘)</label>
                 <input type="number" id="break-time" value="30">
-            </div>
-            <div class="form-group">
-                <label>夜班津貼加成 (%)</label>
-                <input type="number" id="night-loading" value="15">
             </div>
         </div>
 
         <div class="btn-stack">
-            <button class="btn btn-primary" onclick="saveCurrentShift()">確定排入此日期 (單日)</button>
+            <button class="btn btn-primary" onclick="saveCurrentShift()">確定排入本週班表 (單日)</button>
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="fillWeek()">一鍵填滿本週</button>
                 <button class="btn btn-outline" onclick="clearMonthShifts()">清空本月數據</button>
@@ -257,37 +168,69 @@
         </div>
     </div>
 
-    <!-- 4. 當月/當週總計預估 -->
+    <!-- 4. 本週排定班表明細 -->
     <div class="card">
-        <div class="section-title">薪資與工時總計預估</div>
+        <div class="section-title">本週排定班表明細 (<span id="week-range-str">當週</span>)</div>
+        <div id="week-shifts-container">
+            <div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入本週班表」。</small></div>
+        </div>
+    </div>
+
+    <!-- 5. 本週整體財務預估總結 -->
+    <div class="card">
+        <div class="section-title">本週整體財務預估總結</div>
         <div class="summary-row">
-            <span>總計薪工時</span>
-            <span id="total-hours">0.00 小時</span>
+            <span>本週班表薪資小計 (<span class="curr-txt">AUD</span>)</span>
+            <span id="summary-wage-subtotal" style="font-weight: bold;">$0.00</span>
         </div>
         <div class="summary-row">
-            <span>稅前總薪資 (Gross)</span>
-            <span id="total-gross">$0.00</span>
-        </div>
-        <div class="summary-row">
-            <span>預估扣稅 (Tax)</span>
-            <span id="total-tax">-$0.00</span>
+            <span>PPE 工具補助津貼 (<span class="curr-txt">AUD</span>)</span>
+            <span id="summary-ppe" style="font-weight: bold;">$0.00</span>
         </div>
         <div class="summary-row total-row">
-            <span>實領淨薪資 (Net Pay)</span>
-            <span id="total-net">$0.00</span>
+            <span>本週預估總薪資（稅前）(<span class="curr-txt">AUD</span>)</span>
+            <span id="summary-gross" style="color: #64748b;">$0.00</span>
+        </div>
+        <div class="summary-row" style="color: #c2410c;">
+            <span>預估扣稅扣繳 <span id="summary-tax-rate-label">15%</span> (<span class="curr-txt">AUD</span>)</span>
+            <span id="summary-tax">-$0.00</span>
+        </div>
+        
+        <!-- 滿血回歸的綠色實領預估框 -->
+        <div class="net-pay-box">
+            <div class="net-pay-title">本週實領預估（稅後淨所得）</div>
+            <div class="net-pay-amount">
+                <span id="net-box-flag">🇦🇺</span>
+                <span id="summary-net">$0.00</span>
+                <span style="font-size: 14px; font-weight: bold;" id="net-box-code">AUD</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 資料備份與傳輸管理 -->
+    <div style="margin-bottom: 20px;">
+        <div class="accordion-header" onclick="toggleAccordion()">
+            <span>資料備份與傳輸管理</span>
+            <span id="accordion-arrow">▼</span>
+        </div>
+        <div class="accordion-content" id="accordion-content">
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">複製下方文字即可備份；將備份文字貼入下方並點擊匯入即可還原。</div>
+            <textarea id="backup-data" readonly></textarea>
+            <div class="btn-group">
+                <button class="btn btn-outline" style="padding: 6px;" onclick="copyBackup()">複製備份資料</button>
+                <button class="btn btn-outline" style="padding: 6px;" onclick="importData()">匯入還原資料</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // 全域狀態
     let currentCurrency = 'AUD';
-    const FX_RATE = 22.63; // AUD 到 TWD 匯率 
-    let currentDate = new Date(2026, 6, 20); // 鎖定目前時間 2026 年 7 月
+    const FX_RATE = 22.63;
+    let currentDate = new Date(2026, 6, 20); // 鎖定在 2026 年 7 月
     let selectedDate = new Date(2026, 6, 20);
     
-    // 資料結構：儲存格式為 'YYYY-MM-DD': { type, start, end, breakMin, nightLoad }
-    let shiftData = JSON.parse(localStorage.getItem('shiftDataPro')) || {};
+    let shiftData = JSON.parse(localStorage.getItem('shiftDataProMax')) || {};
 
     function init() {
         renderCalendar();
@@ -298,14 +241,18 @@
         currentCurrency = currentCurrency === 'AUD' ? 'TWD' : 'AUD';
         document.getElementById('currency-code').innerText = currentCurrency;
         document.getElementById('currency-flag').innerText = currentCurrency === 'AUD' ? '🇦🇺' : '🇹🇼';
-        calculateSalary();
+        document.getElementById('net-box-code').innerText = currentCurrency;
+        document.getElementById('net-box-flag').innerText = currentCurrency === 'AUD' ? '🇦🇺' : '🇹🇼';
+        const txts = document.querySelectorAll('.curr-txt');
+        txts.forEach(t => t.innerText = currentCurrency);
+        calculateAll();
     }
 
     function formatMoney(amount) {
         if (currentCurrency === 'TWD') {
             return 'NT$ ' + Math.round(amount * FX_RATE).toLocaleString();
         }
-        return '$' + amount.toFixed(2).toLocaleString();
+        return '$' + amount.toFixed(2);
     }
 
     function changeMonth(dir) {
@@ -317,74 +264,47 @@
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         document.getElementById('calendar-month-year').innerText = `${year}年${month + 1}月`;
-
         const grid = document.getElementById('calendar-grid');
         grid.innerHTML = '';
 
-        // 星期欄位
-        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-        weekdays.forEach(w => {
+        ['日', '一', '二', '三', '四', '五', '六'].forEach(w => {
             const el = document.createElement('div');
-            el.className = 'weekday';
-            el.innerText = w;
-            grid.appendChild(el);
+            el.className = 'weekday'; el.innerText = w; grid.appendChild(el);
         });
 
         const firstDayIndex = new Date(year, month, 1).getDay();
         const totalDays = new Date(year, month + 1, 0).getDate();
 
-        // 補空白 (上個月)
         for(let i=0; i<firstDayIndex; i++) {
-            const el = document.createElement('div');
-            el.className = 'day other-month';
-            grid.appendChild(el);
+            const el = document.createElement('div'); el.className = 'day other-month'; grid.appendChild(el);
         }
 
-        // 當月日期
         for(let d=1; d<=totalDays; d++) {
-            const el = document.createElement('div');
-            el.className = 'day';
-            el.innerText = d;
-            
+            const el = document.createElement('div'); el.className = 'day'; el.innerText = d;
             const dateStr = formatDateKey(new Date(year, month, d));
-            if (shiftData[dateStr] && shiftData[dateStr].type !== 'none') {
-                el.classList.add('has-shift');
-            }
-
-            if (selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d) {
-                el.classList.add('selected');
-            }
-
+            if (shiftData[dateStr] && shiftData[dateStr].type !== 'none') el.classList.add('has-shift');
+            if (selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d) el.classList.add('selected');
             el.onclick = () => selectDate(year, month, d);
             grid.appendChild(el);
         }
-        calculateSalary();
+        calculateAll();
     }
 
     function formatDateKey(date) {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     }
 
     function selectDate(y, m, d) {
         selectedDate = new Date(y, m, d);
         document.getElementById('selected-date-str').innerText = `${m+1}月${d}日`;
-        
-        // 重新渲染高亮
-        const days = document.querySelectorAll('.day');
-        days.forEach(el => el.classList.remove('selected'));
         renderCalendar();
 
-        // 載入當天舊資料
         const dateStr = formatDateKey(selectedDate);
         if (shiftData[dateStr]) {
             document.getElementById('shift-type').value = shiftData[dateStr].type;
             document.getElementById('start-time').value = shiftData[dateStr].start;
             document.getElementById('end-time').value = shiftData[dateStr].end;
             document.getElementById('break-time').value = shiftData[dateStr].breakMin;
-            document.getElementById('night-loading').value = shiftData[dateStr].nightLoad || 15;
         } else {
             document.getElementById('shift-type').value = 'none';
         }
@@ -399,104 +319,152 @@
     function saveCurrentShift() {
         const dateStr = formatDateKey(selectedDate);
         const type = document.getElementById('shift-type').value;
-        
-        if(type === 'none') {
-            delete shiftData[dateStr];
-        } else {
+        if(type === 'none') { delete shiftData[dateStr]; }
+        else {
             shiftData[dateStr] = {
                 type: type,
                 start: document.getElementById('start-time').value,
                 end: document.getElementById('end-time').value,
-                breakMin: parseInt(document.getElementById('break-time').value) || 0,
-                nightLoad: parseInt(document.getElementById('night-loading').value) || 0
+                breakMin: parseInt(document.getElementById('break-time').value) || 0
             };
         }
-        localStorage.setItem('shiftDataPro', JSON.stringify(shiftData));
+        localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
         renderCalendar();
     }
 
-    // 一鍵填滿當週工作日 (週一至週五)
     function fillWeek() {
-        const currentDayOfWeek = selectedDate.getDay(); // 0日 1一 ... 6六
+        const currentDayOfWeek = selectedDate.getDay();
         const mondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
-        
         const type = document.getElementById('shift-type').value;
-        if(type === 'none') return alert('請先選擇一個白班或夜班類型再點擊填滿！');
+        if(type === 'none') return alert('請先設定排班類型！');
 
-        const template = {
-            type: type,
-            start: document.getElementById('start-time').value,
-            end: document.getElementById('end-time').value,
-            breakMin: parseInt(document.getElementById('break-time').value) || 0,
-            nightLoad: parseInt(document.getElementById('night-loading').value) || 0
-        };
-
-        // 填滿週一到週五
         for(let i=0; i<5; i++) {
             const targetDate = new Date(selectedDate);
             targetDate.setDate(selectedDate.getDate() + mondayOffset + i);
-            shiftData[formatDateKey(targetDate)] = { ...template };
+            shiftData[formatDateKey(targetDate)] = {
+                type: type,
+                start: document.getElementById('start-time').value,
+                end: document.getElementById('end-time').value,
+                breakMin: parseInt(document.getElementById('break-time').value) || 0
+            };
         }
-
-        localStorage.setItem('shiftDataPro', JSON.stringify(shiftData));
+        localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
         renderCalendar();
     }
 
     function clearMonthShifts() {
-        if(confirm('確定要清空所有的排班資料嗎？')) {
-            shiftData = {};
-            localStorage.removeItem('shiftDataPro');
-            renderCalendar();
-        }
+        if(confirm('確定要清空數據嗎？')) { shiftData = {}; localStorage.removeItem('shiftDataProMax'); renderCalendar(); }
     }
 
-    function calculateSalary() {
+    function getWeekRange(date) {
+        const currentDay = date.getDay();
+        const start = new Date(date);
+        start.setDate(date.getDate() - currentDay);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return { start, end };
+    }
+
+    function calculateAll() {
         const base = parseFloat(document.getElementById('base-rate').value) || 0;
         const casual = parseFloat(document.getElementById('casual-loading').value) || 0;
+        const sundayLoad = parseFloat(document.getElementById('sunday-loading').value) || 0;
+        const doubleLoad = parseFloat(document.getElementById('double-loading').value) || 0;
+        const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
         const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
 
-        let totalHours = 0;
-        let totalGross = 0;
+        document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
 
-        // 計算當前顯示月份的所有天數總和
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const totalDays = new Date(year, month + 1, 0).getDate();
+        // 取得選取日期當週的範圍 (週日至週六)
+        const { start: weekStart, end: weekEnd } = getWeekRange(selectedDate);
+        document.getElementById('week-range-str').innerText = `${weekStart.getMonth()+1}/${weekStart.getDate()} ~ ${weekEnd.getMonth()+1}/${weekEnd.getDate()}`;
 
-        for(let d=1; d<=totalDays; d++) {
-            const dateStr = formatDateKey(new Date(year, month, d));
+        const container = document.getElementById('week-shifts-container');
+        container.innerHTML = '';
+
+        let weekWageSubtotal = 0;
+        let hasAnyShift = false;
+
+        // 計算當週 7 天
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(weekStart);
+            d.setDate(weekStart.getDate() + i);
+            const dateStr = formatDateKey(d);
             const shift = shiftData[dateStr];
-            
-            if(shift && shift.type !== 'none') {
+
+            if (shift && shift.type !== 'none') {
+                hasAnyShift = true;
                 const [sH, sM] = shift.start.split(':').map(Number);
                 let [eH, eM] = shift.end.split(':').map(Number);
-                
-                // 跨夜處理
                 if (eH < sH || (eH === sH && eM < sM)) eH += 24;
                 
-                let diffHours = (eH * 60 + eM) - (sH * 60 + sM);
-                diffHours -= shift.breakMin;
-                const hours = Math.max(0, diffHours / 60);
+                let mins = (eH * 60 + eM) - (sH * 60 + sM) - shift.breakMin;
+                const hours = Math.max(0, mins / 60);
+
+                // 計算費率
+                let rate = base * (1 + casual / 100); // 基礎 + Casual
+                let typeName = '白班';
                 
-                // 算薪水
-                let rate = base * (1 + casual / 100);
-                if(shift.type === 'night') {
-                    rate = rate * (1 + (shift.nightLoad || 15) / 100);
-                }
-                
-                totalHours += hours;
-                totalGross += hours * rate;
+                if (shift.type === 'night') { rate = rate * 1.15; typeName = '夜班'; }
+                else if (shift.type === 'sunday') { rate = base * (1 + sundayLoad / 100); typeName = '星期日'; }
+                else if (shift.type === 'double') { rate = base * (1 + doubleLoad / 100); typeName = 'Double班'; }
+
+                const dayWage = hours * rate;
+                weekWageSubtotal += dayWage;
+
+                // 塞入明細列表
+                const item = document.createElement('div');
+                item.className = 'shift-item';
+                item.innerHTML = `<span>${d.getMonth()+1}/${d.getDate()} (${['日','一','二','三','四','五','六'][d.getDay()]}) - ${typeName}</span>
+                                  <span>${hours.toFixed(2)}hrs / <strong>${formatMoney(dayWage)}</strong></span>`;
+                container.appendChild(el => el); // 修正代碼渲染
+                container.appendChild(item);
             }
         }
 
-        const totalTax = totalGross * (taxRate / 100);
-        const totalNet = totalGross - totalTax;
+        if (!hasAnyShift) {
+            container.innerHTML = '<div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入本週班表」。</small></div>';
+        }
 
-        // 更新畫面
-        document.getElementById('total-hours').innerText = totalHours.toFixed(2) + ' 小時';
-        document.getElementById('total-gross').innerText = formatMoney(totalGross);
-        document.getElementById('total-tax').innerText = '-' + formatMoney(totalTax);
-        document.getElementById('total-net').innerText = formatMoney(totalNet);
+        // 有排班才計入每週 PPE 津貼
+        const finalPpe = hasAnyShift ? ppe : 0;
+        const gross = weekWageSubtotal + finalPpe;
+        const tax = gross * (taxRate / 100);
+        const net = gross - tax;
+
+        // 渲染財務總結
+        document.getElementById('summary-wage-subtotal').innerText = formatMoney(weekWageSubtotal);
+        document.getElementById('summary-ppe').innerText = formatMoney(finalPpe);
+        document.getElementById('summary-gross').innerText = formatMoney(gross);
+        document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
+        document.getElementById('summary-net').innerText = formatMoney(net);
+
+        // 更新備份文字區
+        document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(shiftData)));
+    }
+
+    function toggleAccordion() {
+        const content = document.getElementById('accordion-content');
+        const arrow = document.getElementById('accordion-arrow');
+        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
+        else { content.style.display = 'block'; arrow.innerText = '▲'; }
+    }
+
+    function copyBackup() {
+        const tx = document.getElementById('backup-data');
+        tx.select(); document.execCommand('copy'); alert('備份字串已複製！');
+    }
+
+    function importData() {
+        const str = prompt('請貼入備份字串：');
+        if (str) {
+            try {
+                shiftData = JSON.parse(decodeURIComponent(atob(str)));
+                localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
+                renderCalendar();
+                alert('還原成功！');
+            } catch(e) { alert('字串格式錯誤，還原失敗！'); }
+        }
     }
 
     window.onload = init;
