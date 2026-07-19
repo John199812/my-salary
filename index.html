@@ -89,7 +89,7 @@
 
     <!-- 1. 基礎設定 -->
     <div class="card">
-        <div class="section-title">薪責與津貼設定</div>
+        <div class="section-title">薪資與津貼設定</div>
         <div class="form-group">
             <label>基礎時薪 (Base Rate)</label>
             <input type="number" id="base-rate" value="25.00" step="0.1" onchange="calculateAll()">
@@ -147,15 +147,15 @@
         <div id="shift-time-inputs" style="display: none;">
             <div class="form-group">
                 <label>上班時間</label>
-                <input type="time" id="start-time" value="06:00">
+                <input type="time" id="start-time" value="06:00" onchange="calculateAll()">
             </div>
             <div class="form-group">
                 <label>下班時間</label>
-                <input type="time" id="end-time" value="14:30">
+                <input type="time" id="end-time" value="14:30" onchange="calculateAll()">
             </div>
             <div class="form-group">
                 <label>扣除 Smoko (分鐘)</label>
-                <input type="number" id="break-time" value="30">
+                <input type="number" id="break-time" value="30" onchange="calculateAll()">
             </div>
         </div>
 
@@ -196,7 +196,7 @@
             <span id="summary-tax">-$0.00</span>
         </div>
         
-        <!-- 滿血回歸的綠色實領預估框 -->
+        <!-- 綠色實領預估框 -->
         <div class="net-pay-box">
             <div class="net-pay-title">本週實領預估（稅後淨所得）</div>
             <div class="net-pay-amount">
@@ -297,8 +297,7 @@
     function selectDate(y, m, d) {
         selectedDate = new Date(y, m, d);
         document.getElementById('selected-date-str').innerText = `${m+1}月${d}日`;
-        renderCalendar();
-
+        
         const dateStr = formatDateKey(selectedDate);
         if (shiftData[dateStr]) {
             document.getElementById('shift-type').value = shiftData[dateStr].type;
@@ -309,6 +308,7 @@
             document.getElementById('shift-type').value = 'none';
         }
         toggleShiftInputs();
+        calculateAll();
     }
 
     function toggleShiftInputs() {
@@ -375,7 +375,6 @@
 
         document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
 
-        // 取得選取日期當週的範圍 (週日至週六)
         const { start: weekStart, end: weekEnd } = getWeekRange(selectedDate);
         document.getElementById('week-range-str').innerText = `${weekStart.getMonth()+1}/${weekStart.getDate()} ~ ${weekEnd.getMonth()+1}/${weekEnd.getDate()}`;
 
@@ -385,7 +384,6 @@
         let weekWageSubtotal = 0;
         let hasAnyShift = false;
 
-        // 計算當週 7 天
         for (let i = 0; i < 7; i++) {
             const d = new Date(weekStart);
             d.setDate(weekStart.getDate() + i);
@@ -401,8 +399,7 @@
                 let mins = (eH * 60 + eM) - (sH * 60 + sM) - shift.breakMin;
                 const hours = Math.max(0, mins / 60);
 
-                // 計算費率
-                let rate = base * (1 + casual / 100); // 基礎 + Casual
+                let rate = base * (1 + casual / 100);
                 let typeName = '白班';
                 
                 if (shift.type === 'night') { rate = rate * 1.15; typeName = '夜班'; }
@@ -412,12 +409,10 @@
                 const dayWage = hours * rate;
                 weekWageSubtotal += dayWage;
 
-                // 塞入明細列表
                 const item = document.createElement('div');
                 item.className = 'shift-item';
                 item.innerHTML = `<span>${d.getMonth()+1}/${d.getDate()} (${['日','一','二','三','四','五','六'][d.getDay()]}) - ${typeName}</span>
                                   <span>${hours.toFixed(2)}hrs / <strong>${formatMoney(dayWage)}</strong></span>`;
-                container.appendChild(el => el); // 修正代碼渲染
                 container.appendChild(item);
             }
         }
@@ -426,20 +421,17 @@
             container.innerHTML = '<div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入本週班表」。</small></div>';
         }
 
-        // 有排班才計入每週 PPE 津貼
         const finalPpe = hasAnyShift ? ppe : 0;
         const gross = weekWageSubtotal + finalPpe;
         const tax = gross * (taxRate / 100);
         const net = gross - tax;
 
-        // 渲染財務總結
         document.getElementById('summary-wage-subtotal').innerText = formatMoney(weekWageSubtotal);
         document.getElementById('summary-ppe').innerText = formatMoney(finalPpe);
         document.getElementById('summary-gross').innerText = formatMoney(gross);
         document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
         document.getElementById('summary-net').innerText = formatMoney(net);
 
-        // 更新備份文字區
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(shiftData)));
     }
 
