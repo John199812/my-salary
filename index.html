@@ -49,7 +49,7 @@
         .form-group { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
         .form-group:last-child { border-bottom: none; }
         label { font-size: 14px; font-weight: 500; }
-        input, select { border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: right; width: 110px; }
+        input, select { border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: right; width: 120px; box-sizing: border-box; }
         
         /* 按鈕 */
         .btn-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
@@ -92,23 +92,27 @@
         <div class="section-title">薪資與津貼設定</div>
         <div class="form-group">
             <label>基礎時薪 (Base Rate)</label>
-            <input type="number" id="base-rate" value="25.00" step="0.1" onchange="calculateAll()">
+            <input type="number" id="base-rate" value="0.00" step="0.1" onchange="calculateAll()">
         </div>
         <div class="form-group">
             <label>Casual 加給 (%)</label>
-            <input type="number" id="casual-loading" value="25" onchange="calculateAll()">
+            <select id="casual-loading" onchange="calculateAll()">
+                <option value="25" selected>25% (政府標準)</option>
+                <option value="20">20% (特殊條款)</option>
+                <option value="0">0% (正職/無加給)</option>
+            </select>
         </div>
         <div class="form-group">
             <label>星期日加成率 (%)</label>
-            <input type="number" id="sunday-loading" value="75" onchange="calculateAll()">
+            <input type="number" id="sunday-loading" value="0" onchange="calculateAll()">
         </div>
         <div class="form-group">
             <label>Double 雙倍薪資 (%)</label>
-            <input type="number" id="double-loading" value="100" onchange="calculateAll()">
+            <input type="number" id="double-loading" value="0" onchange="calculateAll()">
         </div>
         <div class="form-group">
             <label>PPE 工具每週津貼</label>
-            <input type="number" id="ppe-allowance" value="5.00" step="0.5" onchange="calculateAll()">
+            <input type="number" id="ppe-allowance" value="0.00" step="0.5" onchange="calculateAll()">
         </div>
         <div class="form-group">
             <label>預估扣稅扣繳</label>
@@ -147,11 +151,11 @@
         <div id="shift-time-inputs" style="display: none;">
             <div class="form-group">
                 <label>上班時間</label>
-                <input type="time" id="start-time" value="06:00" onchange="calculateAll()">
+                <input type="time" id="start-time" value="07:00" onchange="calculateAll()">
             </div>
             <div class="form-group">
                 <label>下班時間</label>
-                <input type="time" id="end-time" value="14:30" onchange="calculateAll()">
+                <input type="time" id="end-time" value="15:00" onchange="calculateAll()">
             </div>
             <div class="form-group">
                 <label>扣除 Smoko (分鐘)</label>
@@ -168,27 +172,27 @@
         </div>
     </div>
 
-    <!-- 4. 本週排定班表明細 -->
+    <!-- 4. 排定班表明細 -->
     <div class="card">
-        <div class="section-title">本週排定班表明細 (<span id="week-range-str">當週</span>)</div>
+        <div class="section-title">已排定班表明細 (全部日期)</div>
         <div id="week-shifts-container">
             <div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入本週班表」。</small></div>
         </div>
     </div>
 
-    <!-- 5. 本週整體財務預估總結 -->
+    <!-- 5. 整體財務預估總結 -->
     <div class="card">
-        <div class="section-title">本週整體財務預估總結</div>
+        <div class="section-title">整體財務預估總結</div>
         <div class="summary-row">
-            <span>本週班表薪資小計 (<span class="curr-txt">AUD</span>)</span>
+            <span>班表薪資總計 (<span class="curr-txt">AUD</span>)</span>
             <span id="summary-wage-subtotal" style="font-weight: bold;">$0.00</span>
         </div>
         <div class="summary-row">
-            <span>PPE 工具補助津貼 (<span class="curr-txt">AUD</span>)</span>
+            <span>PPE 工具補助總津貼 (<span class="curr-txt">AUD</span>)</span>
             <span id="summary-ppe" style="font-weight: bold;">$0.00</span>
         </div>
         <div class="summary-row total-row">
-            <span>本週預估總薪資（稅前）(<span class="curr-txt">AUD</span>)</span>
+            <span>預估總薪資（稅前）(<span class="curr-txt">AUD</span>)</span>
             <span id="summary-gross" style="color: #64748b;">$0.00</span>
         </div>
         <div class="summary-row" style="color: #c2410c;">
@@ -198,7 +202,7 @@
         
         <!-- 綠色實領預估框 -->
         <div class="net-pay-box">
-            <div class="net-pay-title">本週實領預估（稅後淨所得）</div>
+            <div class="net-pay-title">實領預估總計（稅後淨所得）</div>
             <div class="net-pay-amount">
                 <span id="net-box-flag">🇦🇺</span>
                 <span id="summary-net">$0.00</span>
@@ -227,7 +231,7 @@
 <script>
     let currentCurrency = 'AUD';
     const FX_RATE = 22.63;
-    let currentDate = new Date(2026, 6, 20); // 鎖定在 2026 年 7 月
+    let currentDate = new Date(2026, 6, 20); 
     let selectedDate = new Date(2026, 6, 20);
     
     let shiftData = JSON.parse(localStorage.getItem('shiftDataProMax')) || {};
@@ -356,13 +360,12 @@
         if(confirm('確定要清空數據嗎？')) { shiftData = {}; localStorage.removeItem('shiftDataProMax'); renderCalendar(); }
     }
 
-    function getWeekRange(date) {
-        const currentDay = date.getDay();
-        const start = new Date(date);
-        start.setDate(date.getDate() - currentDay);
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        return { start, end };
+    function getWeekNumber(d) {
+        const date = new Date(d.getTime());
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
     }
 
     function calculateAll() {
@@ -375,23 +378,22 @@
 
         document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
 
-        const { start: weekStart, end: weekEnd } = getWeekRange(selectedDate);
-        document.getElementById('week-range-str').innerText = `${weekStart.getMonth()+1}/${weekStart.getDate()} ~ ${weekEnd.getMonth()+1}/${weekEnd.getDate()}`;
-
         const container = document.getElementById('week-shifts-container');
         container.innerHTML = '';
 
-        let weekWageSubtotal = 0;
-        let hasAnyShift = false;
+        let totalWage = 0;
+        let activeWeeks = new Set();
 
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(weekStart);
-            d.setDate(weekStart.getDate() + i);
-            const dateStr = formatDateKey(d);
+        const sortedKeys = Object.keys(shiftData).sort();
+
+        sortedKeys.forEach(dateStr => {
             const shift = shiftData[dateStr];
-
             if (shift && shift.type !== 'none') {
-                hasAnyShift = true;
+                const d = new Date(dateStr + 'T00:00:00');
+                
+                const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
+                activeWeeks.add(weekKey);
+
                 const [sH, sM] = shift.start.split(':').map(Number);
                 let [eH, eM] = shift.end.split(':').map(Number);
                 if (eH < sH || (eH === sH && eM < sM)) eH += 24;
@@ -407,7 +409,7 @@
                 else if (shift.type === 'double') { rate = base * (1 + doubleLoad / 100); typeName = 'Double班'; }
 
                 const dayWage = hours * rate;
-                weekWageSubtotal += dayWage;
+                totalWage += dayWage;
 
                 const item = document.createElement('div');
                 item.className = 'shift-item';
@@ -415,19 +417,19 @@
                                   <span>${hours.toFixed(2)}hrs / <strong>${formatMoney(dayWage)}</strong></span>`;
                 container.appendChild(item);
             }
-        }
+        });
 
-        if (!hasAnyShift) {
+        if (activeWeeks.size === 0) {
             container.innerHTML = '<div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入本週班表」。</small></div>';
         }
 
-        const finalPpe = hasAnyShift ? ppe : 0;
-        const gross = weekWageSubtotal + finalPpe;
+        const totalPpe = activeWeeks.size * ppe;
+        const gross = totalWage + totalPpe;
         const tax = gross * (taxRate / 100);
         const net = gross - tax;
 
-        document.getElementById('summary-wage-subtotal').innerText = formatMoney(weekWageSubtotal);
-        document.getElementById('summary-ppe').innerText = formatMoney(finalPpe);
+        document.getElementById('summary-wage-subtotal').innerText = formatMoney(totalWage);
+        document.getElementById('summary-ppe').innerText = formatMoney(totalPpe);
         document.getElementById('summary-gross').innerText = formatMoney(gross);
         document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
         document.getElementById('summary-net').innerText = formatMoney(net);
