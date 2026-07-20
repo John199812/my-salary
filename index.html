@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>薪資計算與排班預估 Pro Max</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>薪資理財與排班預估 Pro Max</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -15,6 +17,8 @@
             --green-bg: #f0fdf4;
             --green-text: #166534;
             --green-border: #bbf7d0;
+            --orange: #f97316;
+            --red: #ef4444;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -32,7 +36,7 @@
             border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;
         }
         .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 16px; }
-        .section-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 12px; color: #475569; }
+        .section-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 12px; color: #475569; display: flex; align-items: center; gap: 6px; }
         
         /* 日曆樣式 */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -41,7 +45,7 @@
         .day { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; border-radius: 8px; cursor: pointer; position: relative; font-weight: 500; }
         .day:hover { background: #f1f5f9; }
         .day.selected { background: var(--primary) !important; color: white; }
-        .day.has-shift::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: #f97316; border-radius: 50%; }
+        .day.has-shift::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: var(--orange); border-radius: 50%; }
         .day.selected.has-shift::after { background: white; }
         .day.other-month { color: #cbd5e1; }
 
@@ -51,10 +55,16 @@
         label { font-size: 14px; font-weight: 500; }
         input, select { border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: right; width: 120px; box-sizing: border-box; }
         
+        /* 進度條 */
+        .progress-container { background: #e2e8f0; border-radius: 8px; height: 16px; width: 100%; margin: 8px 0; overflow: hidden; position: relative; }
+        .progress-bar { background: linear-gradient(90deg, #22c55e, #10b981); height: 100%; width: 0%; transition: width 0.3s ease; }
+        .progress-text { position: absolute; right: 8px; top: 0; font-size: 11px; font-weight: bold; color: #475569; line-height: 16px; }
+
         /* 按鈕 */
         .btn-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
         .btn-primary { background: var(--primary); color: white; }
+        .btn-save { background: #16a34a; color: white; }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
         
@@ -81,7 +91,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>薪資計算與排班預估</h1>
+        <h1>薪資理財與排班預估</h1>
         <button class="currency-btn" onclick="toggleCurrency()">
             <span id="currency-flag">🇦🇺</span> <span id="currency-code">AUD</span>
         </button>
@@ -92,11 +102,11 @@
         <div class="section-title">薪資與津貼設定</div>
         <div class="form-group">
             <label>基礎時薪 (Base Rate)</label>
-            <input type="number" id="base-rate" value="0.00" step="0.1" onchange="calculateAll()">
+            <input type="number" id="base-rate" value="0.00" step="0.1" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label>Casual 加給 (%)</label>
-            <select id="casual-loading" onchange="calculateAll()">
+            <select id="casual-loading" onchange="saveSettings()">
                 <option value="25" selected>25% (政府標準)</option>
                 <option value="20">20% (特殊條款)</option>
                 <option value="0">0% (正職/無加給)</option>
@@ -104,24 +114,50 @@
         </div>
         <div class="form-group">
             <label>星期日加成率 (%)</label>
-            <input type="number" id="sunday-loading" value="0" onchange="calculateAll()">
+            <input type="number" id="sunday-loading" value="0" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label>Double 雙倍薪資 (%)</label>
-            <input type="number" id="double-loading" value="0" onchange="calculateAll()">
+            <input type="number" id="double-loading" value="0" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label>PPE 工具每週津貼</label>
-            <input type="number" id="ppe-allowance" value="0.00" step="0.5" onchange="calculateAll()">
+            <input type="number" id="ppe-allowance" value="0.00" step="0.5" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label>預估扣稅扣繳</label>
-            <select id="tax-rate" onchange="calculateAll()">
+            <select id="tax-rate" onchange="saveSettings()">
                 <option value="15" selected>15% (背包客低於45k)</option>
                 <option value="32.5">32.5% (超過45k)</option>
                 <option value="12">12% (自訂舊稅率)</option>
                 <option value="0">0% (不扣稅)</option>
             </select>
+        </div>
+    </div>
+
+    <!-- 新增功能：存錢目標與支出紀錄 -->
+    <div class="card">
+        <div class="section-title">🎯 存錢目標與支出記帳</div>
+        <div class="form-group">
+            <label style="color: #059669; font-weight: bold;">設定存錢目標金額</label>
+            <input type="number" id="save-target" value="0" step="100" onchange="saveSettings()">
+        </div>
+        <div style="margin: 10px 0 6px 0; font-size: 13px; font-weight: bold; color: #475569;">💸 預估開銷支出紀錄</div>
+        <div class="form-group">
+            <label>預估房租總額</label>
+            <input type="number" id="exp-rent" value="0" step="10" onchange="saveSettings()">
+        </div>
+        <div class="form-group">
+            <label>食材與生活物資</label>
+            <input type="number" id="exp-groceries" value="0" step="10" onchange="saveSettings()">
+        </div>
+        <div class="form-group">
+            <label>交通油錢支出</label>
+            <input type="number" id="exp-transport" value="0" step="5" onchange="saveSettings()">
+        </div>
+        <div class="form-group">
+            <label>其他娛樂與雜支</label>
+            <input type="number" id="exp-others" value="0" step="5" onchange="saveSettings()">
         </div>
     </div>
 
@@ -151,24 +187,25 @@
         <div id="shift-time-inputs" style="display: none;">
             <div class="form-group">
                 <label>上班時間</label>
-                <input type="time" id="start-time" value="07:00" onchange="calculateAll()">
+                <input type="time" id="start-time" value="07:00">
             </div>
             <div class="form-group">
                 <label>下班時間</label>
-                <input type="time" id="end-time" value="15:00" onchange="calculateAll()">
+                <input type="time" id="end-time" value="15:00">
             </div>
             <div class="form-group">
                 <label>扣除 Smoko (分鐘)</label>
-                <input type="number" id="break-time" value="30" onchange="calculateAll()">
+                <input type="number" id="break-time" value="30">
             </div>
         </div>
 
         <div class="btn-stack">
-            <button class="btn btn-primary" onclick="saveCurrentShift()">確定排入本週班表 (單日)</button>
+            <button class="btn btn-primary" onclick="saveCurrentShift()">確定排入班表 (單日)</button>
             <div class="btn-group">
                 <button class="btn btn-outline" onclick="fillWeek()">一鍵填滿本週</button>
-                <button class="btn btn-outline" onclick="clearMonthShifts()">清空本月數據</button>
+                <button class="btn btn-outline" onclick="clearMonthShifts()">清空數據</button>
             </div>
+            <button class="btn btn-save" onclick="manualSaveAll()">💾 手動儲存所有變更</button>
         </div>
     </div>
 
@@ -176,7 +213,7 @@
     <div class="card">
         <div class="section-title">已排定班表明細 (全部日期)</div>
         <div id="week-shifts-container">
-            <div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入本週班表」。</small></div>
+            <div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入班表」。</small></div>
         </div>
     </div>
 
@@ -209,6 +246,28 @@
                 <span style="font-size: 14px; font-weight: bold;" id="net-box-code">AUD</span>
             </div>
         </div>
+
+        <!-- 財務加強：顯示總支出與實際可存儲蓄 -->
+        <div class="summary-row" style="color: var(--red); margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 8px;">
+            <span>預估開銷總支出 (<span class="curr-txt">AUD</span>)</span>
+            <span id="summary-total-expenses">-$0.00</span>
+        </div>
+        <div class="summary-row" style="color: #059669; font-weight: bold; font-size: 15px;">
+            <span>剩餘淨儲蓄結餘 (<span class="curr-txt">AUD</span>)</span>
+            <span id="summary-savings-remains">$0.00</span>
+        </div>
+
+        <!-- 存錢進度條區塊 -->
+        <div style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #475569;">
+                <span>🎯 存錢目標達成進度</span>
+                <span id="progress-percent" style="font-weight: bold;">0%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+                <div class="progress-text" id="progress-bar-text">還差 $0.00</div>
+            </div>
+        </div>
     </div>
 
     <!-- 6. 資料備份與傳輸管理 -->
@@ -234,11 +293,60 @@
     let currentDate = new Date(2026, 6, 20); 
     let selectedDate = new Date(2026, 6, 20);
     
-    let shiftData = JSON.parse(localStorage.getItem('shiftDataProMax')) || {};
+    let shiftData = {};
 
     function init() {
+        try {
+            const loadedData = localStorage.getItem('shiftDataProMax');
+            if (loadedData) shiftData = JSON.parse(loadedData);
+        } catch(e) { shiftData = {}; }
+
+        loadSettings();
         renderCalendar();
         selectDate(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    }
+
+    function saveSettings() {
+        const settings = {
+            baseRate: document.getElementById('base-rate').value,
+            casualLoading: document.getElementById('casual-loading').value,
+            sundayLoading: document.getElementById('sunday-loading').value,
+            doubleLoading: document.getElementById('double-loading').value,
+            ppeAllowance: document.getElementById('ppe-allowance').value,
+            taxRate: document.getElementById('tax-rate').value,
+            saveTarget: document.getElementById('save-target').value,
+            expRent: document.getElementById('exp-rent').value,
+            expGroceries: document.getElementById('exp-groceries').value,
+            expTransport: document.getElementById('exp-transport').value,
+            expOthers: document.getElementById('exp-others').value
+        };
+        localStorage.setItem('salarySettingsProMax', JSON.stringify(settings));
+        calculateAll();
+    }
+
+    function loadSettings() {
+        try {
+            const settings = JSON.parse(localStorage.getItem('salarySettingsProMax'));
+            if (settings) {
+                if(settings.baseRate !== undefined) document.getElementById('base-rate').value = settings.baseRate;
+                if(settings.casualLoading !== undefined) document.getElementById('casual-loading').value = settings.casualLoading;
+                if(settings.sundayLoading !== undefined) document.getElementById('sunday-loading').value = settings.sundayLoading;
+                if(settings.doubleLoading !== undefined) document.getElementById('double-loading').value = settings.doubleLoading;
+                if(settings.ppeAllowance !== undefined) document.getElementById('ppe-allowance').value = settings.ppeAllowance;
+                if(settings.taxRate !== undefined) document.getElementById('tax-rate').value = settings.taxRate;
+                if(settings.saveTarget !== undefined) document.getElementById('save-target').value = settings.saveTarget;
+                if(settings.expRent !== undefined) document.getElementById('exp-rent').value = settings.expRent;
+                if(settings.expGroceries !== undefined) document.getElementById('exp-groceries').value = settings.expGroceries;
+                if(settings.expTransport !== undefined) document.getElementById('exp-transport').value = settings.expTransport;
+                if(settings.expOthers !== undefined) document.getElementById('exp-others').value = settings.expOthers;
+            }
+        } catch(e) {}
+    }
+
+    function manualSaveAll() {
+        saveSettings();
+        localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
+        alert('✅ 所有資料、記帳支出與班表已成功永久鎖定於本機！');
     }
 
     function toggleCurrency() {
@@ -375,6 +483,14 @@
         const doubleLoad = parseFloat(document.getElementById('double-loading').value) || 0;
         const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
         const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
+        
+        // 抓取新的存錢與開銷數據
+        const target = parseFloat(document.getElementById('save-target').value) || 0;
+        const rent = parseFloat(document.getElementById('exp-rent').value) || 0;
+        const groceries = parseFloat(document.getElementById('exp-groceries').value) || 0;
+        const transport = parseFloat(document.getElementById('exp-transport').value) || 0;
+        const others = parseFloat(document.getElementById('exp-others').value) || 0;
+        const totalExpenses = rent + groceries + transport + others;
 
         document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
 
@@ -383,14 +499,12 @@
 
         let totalWage = 0;
         let activeWeeks = new Set();
-
         const sortedKeys = Object.keys(shiftData).sort();
 
         sortedKeys.forEach(dateStr => {
             const shift = shiftData[dateStr];
             if (shift && shift.type !== 'none') {
                 const d = new Date(dateStr + 'T00:00:00');
-                
                 const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
                 activeWeeks.add(weekKey);
 
@@ -420,19 +534,46 @@
         });
 
         if (activeWeeks.size === 0) {
-            container.innerHTML = '<div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入本週班表」。</small></div>';
+            container.innerHTML = '<div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入班表」。</small></div>';
         }
 
         const totalPpe = activeWeeks.size * ppe;
         const gross = totalWage + totalPpe;
         const tax = gross * (taxRate / 100);
         const net = gross - tax;
+        const finalSavings = net - totalExpenses;
 
+        // 更新舊的總結區塊
         document.getElementById('summary-wage-subtotal').innerText = formatMoney(totalWage);
         document.getElementById('summary-ppe').innerText = formatMoney(totalPpe);
         document.getElementById('summary-gross').innerText = formatMoney(gross);
         document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
         document.getElementById('summary-net').innerText = formatMoney(net);
+
+        // 更新新的支出與儲蓄區塊
+        document.getElementById('summary-total-expenses').innerText = '-' + formatMoney(totalExpenses);
+        document.getElementById('summary-savings-remains').innerText = formatMoney(finalSavings);
+
+        // 更新存錢進度條
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const progressBarText = document.getElementById('progress-bar-text');
+
+        if (target > 0) {
+            let pct = Math.min(100, Math.max(0, (finalSavings / target) * 100));
+            progressBar.style.width = pct + '%';
+            progressPercent.innerText = pct.toFixed(1) + '%';
+            
+            if (finalSavings >= target) {
+                progressBarText.innerText = '恭喜達成目標！🎉';
+            } else {
+                progressBarText.innerText = '還差 ' + formatMoney(target - finalSavings);
+            }
+        } else {
+            progressBar.style.width = '0%';
+            progressPercent.innerText = '0%';
+            progressBarText.innerText = '未設定目標金額';
+        }
 
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(shiftData)));
     }
