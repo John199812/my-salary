@@ -2,10 +2,13 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>薪資理財與排班預估 Pro Max</title>
+    <meta name="apple-mobile-web-app-title" content="GoalPay">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <title>GoalPay - 薪資理財與排班預估 Pro Max</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -26,10 +29,12 @@
             color: var(--text);
             margin: 0;
             padding: 16px;
+            /* 修正 iPhone 頂部瀏海避讓，防止標題被邊界切到 */
+            padding-top: max(20px, env(safe-area-inset-top));
             padding-bottom: 60px;
         }
         .container { max-width: 500px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 10px; }
         h1 { font-size: 20px; margin: 0; }
         .currency-btn {
             background: #ffffff; border: 1px solid var(--border); padding: 6px 12px;
@@ -91,7 +96,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>薪資理財與排班預估</h1>
+        <h1>GoalPay 薪資與排班預估</h1>
         <button class="currency-btn" onclick="toggleCurrency()">
             <span id="currency-flag">🇦🇺</span> <span id="currency-code">AUD</span>
         </button>
