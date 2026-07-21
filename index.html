@@ -1,204 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoalPay</title>
-    
-    <!-- 📱 手機加入主畫面時的 App 標題與風格設定 -->
-    <meta name="apple-mobile-web-app-title" content="GoalPay">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0B291A">
-
-    <style>
-        /* 基本黑金 + 鈔票綠主題樣式 */
-        body {
-            background-color: #0B291A;
-            color: #FFFFFF;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            color: #F59E0B;
-            font-size: 2.5rem;
-            margin: 10px 0 5px 0;
-            font-weight: 900;
-            letter-spacing: 1px;
-        }
-
-        /* 控制區域：幣值與語言下拉選單列 */
-        .controls-bar {
-            display: flex;
-            gap: 15px;
-            background: #0F172A;
-            padding: 12px 20px;
-            border-radius: 12px;
-            border: 1px solid #1E293B;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .control-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 0.9rem;
-            color: #94A3B8;
-        }
-
-        select {
-            background-color: #1E293B;
-            color: #FDE047;
-            border: 1px solid #334155;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            outline: none;
-            cursor: pointer;
-        }
-
-        select:focus {
-            border-color: #F59E0B;
-        }
-
-        /* 主卡片區域 */
-        .card {
-            background: #0F172A;
-            border: 1px solid #1E293B;
-            border-radius: 16px;
-            padding: 24px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-        }
-
-        .btn-primary {
-            width: 100%;
-            background: linear-gradient(135deg, #FDE047 0%, #F59E0B 100%);
-            color: #0F172A;
-            font-weight: 800;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <title>GoalPay 薪資計算與排班預估 Pro Max</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #f59e0b;
+    }
+    body {
+      margin: 0;
+      padding: max(20px, env(safe-area-inset-top)) 16px 20px 16px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-top: 10px;
+    }
+    h1 {
+      color: var(--accent);
+      margin: 0;
+      font-size: 2rem;
+    }
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .btn {
+      background-color: var(--accent);
+      color: #000;
+      font-weight: bold;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-
-    <!-- 頂部 Header -->
-    <div class="header">
-        <h1>GoalPay</h1>
-    </div>
-
-    <!-- 🎛️ 選單工具列：幣值轉換 + 多語言切換（位置緊鄰） -->
-    <div class="controls-bar">
-        <!-- 1. 幣值轉換 -->
-        <div class="control-item">
-            <label for="currencySelect" class="i18n" data-key="label_currency">Currency:</label>
-            <select id="currencySelect">
-                <option value="AUD">AUD ($)</option>
-                <option value="TWD">TWD (NT$)</option>
-                <option value="USD">USD ($)</option>
-            </select>
-        </div>
-
-        <!-- 2. 多語言切換 (預設為英文 en) -->
-        <div class="control-item">
-            <label for="languageSelect" class="i18n" data-key="label_language">Language:</label>
-            <select id="languageSelect" onchange="changeLanguage()">
-                <option value="en" selected>English</option>
-                <option value="zh-TW">繁體中文</option>
-                <option value="ja">日本語</option>
-                <option value="ko">한국어</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- 📲 App 主功能卡片範例 -->
-    <div class="card">
-        <h2 class="i18n" data-key="card_title" style="margin-top:0; color:#F59E0B;">Pay Calculator</h2>
-        <p class="i18n" data-key="card_desc" style="color:#94A3B8;">Track your goals and calculate your weekly pay easily.</p>
-
-        <button class="btn-primary i18n" data-key="btn_calculate">Calculate Now</button>
-    </div>
-
-    <!-- 📜 多語言邏輯 JavaScript -->
-    <script>
-        // 1. 各語言文字字典 (可自由擴充字典內容)
-        const translations = {
-            'en': {
-                'label_currency': 'Currency:',
-                'label_language': 'Language:',
-                'card_title': 'Pay Calculator',
-                'card_desc': 'Track your goals and calculate your weekly pay easily.',
-                'btn_calculate': 'Calculate Now'
-            },
-            'zh-TW': {
-                'label_currency': '幣值轉換:',
-                'label_language': '介面語言:',
-                'card_title': '薪資計算器',
-                'card_desc': '輕鬆追蹤你的存錢目標與每週薪資。',
-                'btn_calculate': '立即計算'
-            },
-            'ja': {
-                'label_currency': '通貨:',
-                'label_language': '言語:',
-                'card_title': '給与計算機',
-                'card_desc': '目標を追跡し、週給を簡単に計算します。',
-                'btn_calculate': '今すぐ計算'
-            },
-            'ko': {
-                'label_currency': '통화:',
-                'label_language': '언어:',
-                'card_title': '급여 계산기',
-                'card_desc': '목표를 추적하고 주급을 쉽게 계산하세요.',
-                'btn_calculate': '지금 계산하기'
-            }
-        };
-
-        // 2. 切換語言的核心 Function
-        function changeLanguage() {
-            const selectedLang = document.getElementById('languageSelect').value;
-            const langData = translations[selectedLang];
-
-            if (!langData) return;
-
-            // 尋找所有帶有 .i18n 類別的元素並更換文字
-            document.querySelectorAll('.i18n').forEach(element => {
-                const key = element.getAttribute('data-key');
-                if (langData[key]) {
-                    element.textContent = langData[key];
-                }
-            });
-
-            // 記住使用者的語言偏好
-            localStorage.setItem('goalpay_lang', selectedLang);
-        }
-
-        // 3. 頁面載入時執行預設英文
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedLang = localStorage.getItem('goalpay_lang') || 'en';
-            document.getElementById('languageSelect').value = savedLang;
-            changeLanguage();
-        });
-    </script>
+  <header>
+    <h1>GoalPay</h1>
+  </header>
+  <main class="card">
+    <h2>薪資計算器</h2>
+    <p style="color: var(--text-muted);">輕鬆追蹤你的存錢目標與每週薪資。</p>
+    <button class="btn">立即計算</button>
+  </main>
 </body>
 </html>
