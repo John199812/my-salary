@@ -1,609 +1,204 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoalPay</title>
+    
+    <!-- 📱 手機加入主畫面時的 App 標題與風格設定 -->
+    <meta name="apple-mobile-web-app-title" content="GoalPay">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>薪資理財與排班預估 Pro Max</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0B291A">
+
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --border: #e2e8f0;
-            --green-bg: #f0fdf4;
-            --green-text: #166534;
-            --green-border: #bbf7d0;
-            --orange: #f97316;
-            --red: #ef4444;
-        }
+        /* 基本黑金 + 鈔票綠主題樣式 */
         body {
+            background-color: #0B291A;
+            color: #FFFFFF;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
             margin: 0;
-            padding: 16px;
-            padding-bottom: 60px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .container { max-width: 500px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        h1 { font-size: 20px; margin: 0; }
-        .currency-btn {
-            background: #ffffff; border: 1px solid var(--border); padding: 6px 12px;
-            border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
         }
-        .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 16px; }
-        .section-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 12px; color: #475569; display: flex; align-items: center; gap: 6px; }
-        
-        /* 日曆樣式 */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
-        .weekday { font-size: 12px; font-weight: bold; color: #94a3b8; padding: 4px 0; }
-        .day { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; border-radius: 8px; cursor: pointer; position: relative; font-weight: 500; }
-        .day:hover { background: #f1f5f9; }
-        .day.selected { background: var(--primary) !important; color: white; }
-        .day.has-shift::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: var(--orange); border-radius: 50%; }
-        .day.selected.has-shift::after { background: white; }
-        .day.other-month { color: #cbd5e1; }
 
-        /* 表單 */
-        .form-group { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-        .form-group:last-child { border-bottom: none; }
-        label { font-size: 14px; font-weight: 500; }
-        input, select { border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: right; width: 120px; box-sizing: border-box; }
-        
-        /* 進度條 */
-        .progress-container { background: #e2e8f0; border-radius: 8px; height: 16px; width: 100%; margin: 8px 0; overflow: hidden; position: relative; }
-        .progress-bar { background: linear-gradient(90deg, #22c55e, #10b981); height: 100%; width: 0%; transition: width 0.3s ease; }
-        .progress-text { position: absolute; right: 8px; top: 0; font-size: 11px; font-weight: bold; color: #475569; line-height: 16px; }
+        .header h1 {
+            color: #F59E0B;
+            font-size: 2.5rem;
+            margin: 10px 0 5px 0;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
 
-        /* 按鈕 */
-        .btn-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-save { background: #16a34a; color: white; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        
-        /* 明細清單 */
-        .empty-text { color: #94a3b8; text-align: center; padding: 20px 0; font-size: 14px; line-height: 1.6; }
-        .shift-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
-        
-        /* 財務統計 */
-        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
-        .total-row { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 8px; font-weight: 500; }
-        
-        /* 綠色實領框 */
-        .net-pay-box { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 12px; padding: 12px; margin-top: 12px; color: var(--green-text); }
-        .net-pay-title { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
-        .net-pay-amount { font-size: 24px; font-weight: 900; display: flex; align-items: center; gap: 6px; }
-        
-        /* 折疊選單 */
-        .accordion-header { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .accordion-content { display: none; padding: 12px; background: #fff; border: 1px solid var(--border); border-top: none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
-        textarea { width: 100%; height: 80px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; box-sizing: border-box; font-size: 12px; margin-bottom: 8px; }
+        /* 控制區域：幣值與語言下拉選單列 */
+        .controls-bar {
+            display: flex;
+            gap: 15px;
+            background: #0F172A;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid #1E293B;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: #94A3B8;
+        }
+
+        select {
+            background-color: #1E293B;
+            color: #FDE047;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: #F59E0B;
+        }
+
+        /* 主卡片區域 */
+        .card {
+            background: #0F172A;
+            border: 1px solid #1E293B;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #FDE047 0%, #F59E0B 100%);
+            color: #0F172A;
+            font-weight: 800;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
+    <!-- 頂部 Header -->
     <div class="header">
-        <h1>薪資理財與排班預估</h1>
-        <button class="currency-btn" onclick="toggleCurrency()">
-            <span id="currency-flag">🇦🇺</span> <span id="currency-code">AUD</span>
-        </button>
+        <h1>GoalPay</h1>
     </div>
 
-    <!-- 1. 基礎設定 -->
-    <div class="card">
-        <div class="section-title">薪資與津貼設定</div>
-        <div class="form-group">
-            <label>基礎時薪 (Base Rate)</label>
-            <input type="number" id="base-rate" value="0.00" step="0.1" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label>Casual 加給 (%)</label>
-            <select id="casual-loading" onchange="saveSettings()">
-                <option value="25" selected>25% (政府標準)</option>
-                <option value="20">20% (特殊條款)</option>
-                <option value="0">0% (正職/無加給)</option>
+    <!-- 🎛️ 選單工具列：幣值轉換 + 多語言切換（位置緊鄰） -->
+    <div class="controls-bar">
+        <!-- 1. 幣值轉換 -->
+        <div class="control-item">
+            <label for="currencySelect" class="i18n" data-key="label_currency">Currency:</label>
+            <select id="currencySelect">
+                <option value="AUD">AUD ($)</option>
+                <option value="TWD">TWD (NT$)</option>
+                <option value="USD">USD ($)</option>
             </select>
         </div>
-        <div class="form-group">
-            <label>星期日加成率 (%)</label>
-            <input type="number" id="sunday-loading" value="0" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label>Double 雙倍薪資 (%)</label>
-            <input type="number" id="double-loading" value="0" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label>PPE 工具每週津貼</label>
-            <input type="number" id="ppe-allowance" value="0.00" step="0.5" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label>預估扣稅扣繳</label>
-            <select id="tax-rate" onchange="saveSettings()">
-                <option value="15" selected>15% (背包客低於45k)</option>
-                <option value="32.5">32.5% (超過45k)</option>
-                <option value="12">12% (自訂舊稅率)</option>
-                <option value="0">0% (不扣稅)</option>
+
+        <!-- 2. 多語言切換 (預設為英文 en) -->
+        <div class="control-item">
+            <label for="languageSelect" class="i18n" data-key="label_language">Language:</label>
+            <select id="languageSelect" onchange="changeLanguage()">
+                <option value="en" selected>English</option>
+                <option value="zh-TW">繁體中文</option>
+                <option value="ja">日本語</option>
+                <option value="ko">한국어</option>
             </select>
         </div>
     </div>
 
-    <!-- 新增功能：存錢目標與支出紀錄 -->
+    <!-- 📲 App 主功能卡片範例 -->
     <div class="card">
-        <div class="section-title">🎯 存錢目標與支出記帳</div>
-        <div class="form-group">
-            <label style="color: #059669; font-weight: bold;">設定存錢目標金額</label>
-            <input type="number" id="save-target" value="0" step="100" onchange="saveSettings()">
-        </div>
-        <div style="margin: 10px 0 6px 0; font-size: 13px; font-weight: bold; color: #475569;">💸 預估開銷支出紀錄</div>
-        <div class="form-group">
-            <label>預估房租總額</label>
-            <input type="number" id="exp-rent" value="0" step="10" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label>食材與生活物資</label>
-            <input type="number" id="exp-groceries" value="0" step="10" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label>交通油錢支出</label>
-            <input type="number" id="exp-transport" value="0" step="5" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label>其他娛樂與雜支</label>
-            <input type="number" id="exp-others" value="0" step="5" onchange="saveSettings()">
-        </div>
+        <h2 class="i18n" data-key="card_title" style="margin-top:0; color:#F59E0B;">Pay Calculator</h2>
+        <p class="i18n" data-key="card_desc" style="color:#94A3B8;">Track your goals and calculate your weekly pay easily.</p>
+
+        <button class="btn-primary i18n" data-key="btn_calculate">Calculate Now</button>
     </div>
 
-    <!-- 2. 日曆 -->
-    <div class="card">
-        <div class="calendar-header">
-            <button onclick="changeMonth(-1)" style="border:none;background:none;cursor:pointer;font-weight:bold;">&lt;</button>
-            <span id="calendar-month-year" style="font-weight: bold;">2026年7月</span>
-            <button onclick="changeMonth(1)" style="border:none;background:none;cursor:pointer;font-weight:bold;">&gt;</button>
-        </div>
-        <div class="calendar-grid" id="calendar-grid"></div>
-    </div>
-
-    <!-- 3. 排班操作 -->
-    <div class="card">
-        <div class="section-title">當日排班操作 (<span id="selected-date-str">請選擇日期</span>)</div>
-        <div class="form-group">
-            <label>排班類型</label>
-            <select id="shift-type" onchange="toggleShiftInputs()">
-                <option value="none">放假 / 未排班</option>
-                <option value="day">白班 (一般費率)</option>
-                <option value="night">夜班 (加成費率)</option>
-                <option value="sunday">星期日班表</option>
-                <option value="double">國定假日 Double</option>
-            </select>
-        </div>
-        <div id="shift-time-inputs" style="display: none;">
-            <div class="form-group">
-                <label>上班時間</label>
-                <input type="time" id="start-time" value="07:00">
-            </div>
-            <div class="form-group">
-                <label>下班時間</label>
-                <input type="time" id="end-time" value="15:00">
-            </div>
-            <div class="form-group">
-                <label>扣除 Smoko (分鐘)</label>
-                <input type="number" id="break-time" value="30">
-            </div>
-        </div>
-
-        <div class="btn-stack">
-            <button class="btn btn-primary" onclick="saveCurrentShift()">確定排入班表 (單日)</button>
-            <div class="btn-group">
-                <button class="btn btn-outline" onclick="fillWeek()">一鍵填滿本週</button>
-                <button class="btn btn-outline" onclick="clearMonthShifts()">清空數據</button>
-            </div>
-            <button class="btn btn-save" onclick="manualSaveAll()">💾 手動儲存所有變更</button>
-        </div>
-    </div>
-
-    <!-- 4. 排定班表明細 -->
-    <div class="card">
-        <div class="section-title">已排定班表明細 (全部日期)</div>
-        <div id="week-shifts-container">
-            <div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入班表」。</small></div>
-        </div>
-    </div>
-
-    <!-- 5. 整體財務預估總結 -->
-    <div class="card">
-        <div class="section-title">整體財務預估總結</div>
-        <div class="summary-row">
-            <span>班表薪資總計 (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-wage-subtotal" style="font-weight: bold;">$0.00</span>
-        </div>
-        <div class="summary-row">
-            <span>PPE 工具補助總津貼 (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-ppe" style="font-weight: bold;">$0.00</span>
-        </div>
-        <div class="summary-row total-row">
-            <span>預估總薪資（稅前）(<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-gross" style="color: #64748b;">$0.00</span>
-        </div>
-        <div class="summary-row" style="color: #c2410c;">
-            <span>預估扣稅扣繳 <span id="summary-tax-rate-label">15%</span> (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-tax">-$0.00</span>
-        </div>
-        
-        <!-- 綠色實領預估框 -->
-        <div class="net-pay-box">
-            <div class="net-pay-title">實領預估總計（稅後淨所得）</div>
-            <div class="net-pay-amount">
-                <span id="net-box-flag">🇦🇺</span>
-                <span id="summary-net">$0.00</span>
-                <span style="font-size: 14px; font-weight: bold;" id="net-box-code">AUD</span>
-            </div>
-        </div>
-
-        <!-- 財務加強：顯示總支出與實際可存儲蓄 -->
-        <div class="summary-row" style="color: var(--red); margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 8px;">
-            <span>預估開銷總支出 (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-total-expenses">-$0.00</span>
-        </div>
-        <div class="summary-row" style="color: #059669; font-weight: bold; font-size: 15px;">
-            <span>剩餘淨儲蓄結餘 (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-savings-remains">$0.00</span>
-        </div>
-
-        <!-- 存錢進度條區塊 -->
-        <div style="margin-top: 10px;">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #475569;">
-                <span>🎯 存錢目標達成進度</span>
-                <span id="progress-percent" style="font-weight: bold;">0%</span>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" id="progress-bar"></div>
-                <div class="progress-text" id="progress-bar-text">還差 $0.00</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. 資料備份與傳輸管理 -->
-    <div style="margin-bottom: 20px;">
-        <div class="accordion-header" onclick="toggleAccordion()">
-            <span>資料備份與傳輸管理</span>
-            <span id="accordion-arrow">▼</span>
-        </div>
-        <div class="accordion-content" id="accordion-content">
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">複製下方文字即可備份；將備份文字貼入下方並點擊匯入即可還原。</div>
-            <textarea id="backup-data" readonly></textarea>
-            <div class="btn-group">
-                <button class="btn btn-outline" style="padding: 6px;" onclick="copyBackup()">複製備份資料</button>
-                <button class="btn btn-outline" style="padding: 6px;" onclick="importData()">匯入還原資料</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    let currentCurrency = 'AUD';
-    const FX_RATE = 22.63;
-    let currentDate = new Date(2026, 6, 20); 
-    let selectedDate = new Date(2026, 6, 20);
-    
-    let shiftData = {};
-
-    function init() {
-        try {
-            const loadedData = localStorage.getItem('shiftDataProMax');
-            if (loadedData) shiftData = JSON.parse(loadedData);
-        } catch(e) { shiftData = {}; }
-
-        loadSettings();
-        renderCalendar();
-        selectDate(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-    }
-
-    function saveSettings() {
-        const settings = {
-            baseRate: document.getElementById('base-rate').value,
-            casualLoading: document.getElementById('casual-loading').value,
-            sundayLoading: document.getElementById('sunday-loading').value,
-            doubleLoading: document.getElementById('double-loading').value,
-            ppeAllowance: document.getElementById('ppe-allowance').value,
-            taxRate: document.getElementById('tax-rate').value,
-            saveTarget: document.getElementById('save-target').value,
-            expRent: document.getElementById('exp-rent').value,
-            expGroceries: document.getElementById('exp-groceries').value,
-            expTransport: document.getElementById('exp-transport').value,
-            expOthers: document.getElementById('exp-others').value
+    <!-- 📜 多語言邏輯 JavaScript -->
+    <script>
+        // 1. 各語言文字字典 (可自由擴充字典內容)
+        const translations = {
+            'en': {
+                'label_currency': 'Currency:',
+                'label_language': 'Language:',
+                'card_title': 'Pay Calculator',
+                'card_desc': 'Track your goals and calculate your weekly pay easily.',
+                'btn_calculate': 'Calculate Now'
+            },
+            'zh-TW': {
+                'label_currency': '幣值轉換:',
+                'label_language': '介面語言:',
+                'card_title': '薪資計算器',
+                'card_desc': '輕鬆追蹤你的存錢目標與每週薪資。',
+                'btn_calculate': '立即計算'
+            },
+            'ja': {
+                'label_currency': '通貨:',
+                'label_language': '言語:',
+                'card_title': '給与計算機',
+                'card_desc': '目標を追跡し、週給を簡単に計算します。',
+                'btn_calculate': '今すぐ計算'
+            },
+            'ko': {
+                'label_currency': '통화:',
+                'label_language': '언어:',
+                'card_title': '급여 계산기',
+                'card_desc': '목표를 추적하고 주급을 쉽게 계산하세요.',
+                'btn_calculate': '지금 계산하기'
+            }
         };
-        localStorage.setItem('salarySettingsProMax', JSON.stringify(settings));
-        calculateAll();
-    }
 
-    function loadSettings() {
-        try {
-            const settings = JSON.parse(localStorage.getItem('salarySettingsProMax'));
-            if (settings) {
-                if(settings.baseRate !== undefined) document.getElementById('base-rate').value = settings.baseRate;
-                if(settings.casualLoading !== undefined) document.getElementById('casual-loading').value = settings.casualLoading;
-                if(settings.sundayLoading !== undefined) document.getElementById('sunday-loading').value = settings.sundayLoading;
-                if(settings.doubleLoading !== undefined) document.getElementById('double-loading').value = settings.doubleLoading;
-                if(settings.ppeAllowance !== undefined) document.getElementById('ppe-allowance').value = settings.ppeAllowance;
-                if(settings.taxRate !== undefined) document.getElementById('tax-rate').value = settings.taxRate;
-                if(settings.saveTarget !== undefined) document.getElementById('save-target').value = settings.saveTarget;
-                if(settings.expRent !== undefined) document.getElementById('exp-rent').value = settings.expRent;
-                if(settings.expGroceries !== undefined) document.getElementById('exp-groceries').value = settings.expGroceries;
-                if(settings.expTransport !== undefined) document.getElementById('exp-transport').value = settings.expTransport;
-                if(settings.expOthers !== undefined) document.getElementById('exp-others').value = settings.expOthers;
-            }
-        } catch(e) {}
-    }
+        // 2. 切換語言的核心 Function
+        function changeLanguage() {
+            const selectedLang = document.getElementById('languageSelect').value;
+            const langData = translations[selectedLang];
 
-    function manualSaveAll() {
-        saveSettings();
-        localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-        alert('✅ 所有資料、記帳支出與班表已成功永久鎖定於本機！');
-    }
+            if (!langData) return;
 
-    function toggleCurrency() {
-        currentCurrency = currentCurrency === 'AUD' ? 'TWD' : 'AUD';
-        document.getElementById('currency-code').innerText = currentCurrency;
-        document.getElementById('currency-flag').innerText = currentCurrency === 'AUD' ? '🇦🇺' : '🇹🇼';
-        document.getElementById('net-box-code').innerText = currentCurrency;
-        document.getElementById('net-box-flag').innerText = currentCurrency === 'AUD' ? '🇦🇺' : '🇹🇼';
-        const txts = document.querySelectorAll('.curr-txt');
-        txts.forEach(t => t.innerText = currentCurrency);
-        calculateAll();
-    }
+            // 尋找所有帶有 .i18n 類別的元素並更換文字
+            document.querySelectorAll('.i18n').forEach(element => {
+                const key = element.getAttribute('data-key');
+                if (langData[key]) {
+                    element.textContent = langData[key];
+                }
+            });
 
-    function formatMoney(amount) {
-        if (currentCurrency === 'TWD') {
-            return 'NT$ ' + Math.round(amount * FX_RATE).toLocaleString();
+            // 記住使用者的語言偏好
+            localStorage.setItem('goalpay_lang', selectedLang);
         }
-        return '$' + amount.toFixed(2);
-    }
 
-    function changeMonth(dir) {
-        currentDate.setMonth(currentDate.getMonth() + dir);
-        renderCalendar();
-    }
-
-    function renderCalendar() {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        document.getElementById('calendar-month-year').innerText = `${year}年${month + 1}月`;
-        const grid = document.getElementById('calendar-grid');
-        grid.innerHTML = '';
-
-        ['日', '一', '二', '三', '四', '五', '六'].forEach(w => {
-            const el = document.createElement('div');
-            el.className = 'weekday'; el.innerText = w; grid.appendChild(el);
+        // 3. 頁面載入時執行預設英文
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('goalpay_lang') || 'en';
+            document.getElementById('languageSelect').value = savedLang;
+            changeLanguage();
         });
-
-        const firstDayIndex = new Date(year, month, 1).getDay();
-        const totalDays = new Date(year, month + 1, 0).getDate();
-
-        for(let i=0; i<firstDayIndex; i++) {
-            const el = document.createElement('div'); el.className = 'day other-month'; grid.appendChild(el);
-        }
-
-        for(let d=1; d<=totalDays; d++) {
-            const el = document.createElement('div'); el.className = 'day'; el.innerText = d;
-            const dateStr = formatDateKey(new Date(year, month, d));
-            if (shiftData[dateStr] && shiftData[dateStr].type !== 'none') el.classList.add('has-shift');
-            if (selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d) el.classList.add('selected');
-            el.onclick = () => selectDate(year, month, d);
-            grid.appendChild(el);
-        }
-        calculateAll();
-    }
-
-    function formatDateKey(date) {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    }
-
-    function selectDate(y, m, d) {
-        selectedDate = new Date(y, m, d);
-        document.getElementById('selected-date-str').innerText = `${m+1}月${d}日`;
-        
-        const dateStr = formatDateKey(selectedDate);
-        if (shiftData[dateStr]) {
-            document.getElementById('shift-type').value = shiftData[dateStr].type;
-            document.getElementById('start-time').value = shiftData[dateStr].start;
-            document.getElementById('end-time').value = shiftData[dateStr].end;
-            document.getElementById('break-time').value = shiftData[dateStr].breakMin;
-        } else {
-            document.getElementById('shift-type').value = 'none';
-        }
-        toggleShiftInputs();
-        calculateAll();
-    }
-
-    function toggleShiftInputs() {
-        const type = document.getElementById('shift-type').value;
-        document.getElementById('shift-time-inputs').style.display = type === 'none' ? 'none' : 'block';
-    }
-
-    function saveCurrentShift() {
-        const dateStr = formatDateKey(selectedDate);
-        const type = document.getElementById('shift-type').value;
-        if(type === 'none') { delete shiftData[dateStr]; }
-        else {
-            shiftData[dateStr] = {
-                type: type,
-                start: document.getElementById('start-time').value,
-                end: document.getElementById('end-time').value,
-                breakMin: parseInt(document.getElementById('break-time').value) || 0
-            };
-        }
-        localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-        renderCalendar();
-    }
-
-    function fillWeek() {
-        const currentDayOfWeek = selectedDate.getDay();
-        const mondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
-        const type = document.getElementById('shift-type').value;
-        if(type === 'none') return alert('請先設定排班類型！');
-
-        for(let i=0; i<5; i++) {
-            const targetDate = new Date(selectedDate);
-            targetDate.setDate(selectedDate.getDate() + mondayOffset + i);
-            shiftData[formatDateKey(targetDate)] = {
-                type: type,
-                start: document.getElementById('start-time').value,
-                end: document.getElementById('end-time').value,
-                breakMin: parseInt(document.getElementById('break-time').value) || 0
-            };
-        }
-        localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-        renderCalendar();
-    }
-
-    function clearMonthShifts() {
-        if(confirm('確定要清空數據嗎？')) { shiftData = {}; localStorage.removeItem('shiftDataProMax'); renderCalendar(); }
-    }
-
-    function getWeekNumber(d) {
-        const date = new Date(d.getTime());
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-        const week1 = new Date(date.getFullYear(), 0, 4);
-        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-    }
-
-    function calculateAll() {
-        const base = parseFloat(document.getElementById('base-rate').value) || 0;
-        const casual = parseFloat(document.getElementById('casual-loading').value) || 0;
-        const sundayLoad = parseFloat(document.getElementById('sunday-loading').value) || 0;
-        const doubleLoad = parseFloat(document.getElementById('double-loading').value) || 0;
-        const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
-        const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
-        
-        // 抓取新的存錢與開銷數據
-        const target = parseFloat(document.getElementById('save-target').value) || 0;
-        const rent = parseFloat(document.getElementById('exp-rent').value) || 0;
-        const groceries = parseFloat(document.getElementById('exp-groceries').value) || 0;
-        const transport = parseFloat(document.getElementById('exp-transport').value) || 0;
-        const others = parseFloat(document.getElementById('exp-others').value) || 0;
-        const totalExpenses = rent + groceries + transport + others;
-
-        document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
-
-        const container = document.getElementById('week-shifts-container');
-        container.innerHTML = '';
-
-        let totalWage = 0;
-        let activeWeeks = new Set();
-        const sortedKeys = Object.keys(shiftData).sort();
-
-        sortedKeys.forEach(dateStr => {
-            const shift = shiftData[dateStr];
-            if (shift && shift.type !== 'none') {
-                const d = new Date(dateStr + 'T00:00:00');
-                const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
-                activeWeeks.add(weekKey);
-
-                const [sH, sM] = shift.start.split(':').map(Number);
-                let [eH, eM] = shift.end.split(':').map(Number);
-                if (eH < sH || (eH === sH && eM < sM)) eH += 24;
-                
-                let mins = (eH * 60 + eM) - (sH * 60 + sM) - shift.breakMin;
-                const hours = Math.max(0, mins / 60);
-
-                let rate = base * (1 + casual / 100);
-                let typeName = '白班';
-                
-                if (shift.type === 'night') { rate = rate * 1.15; typeName = '夜班'; }
-                else if (shift.type === 'sunday') { rate = base * (1 + sundayLoad / 100); typeName = '星期日'; }
-                else if (shift.type === 'double') { rate = base * (1 + doubleLoad / 100); typeName = 'Double班'; }
-
-                const dayWage = hours * rate;
-                totalWage += dayWage;
-
-                const item = document.createElement('div');
-                item.className = 'shift-item';
-                item.innerHTML = `<span>${d.getMonth()+1}/${d.getDate()} (${['日','一','二','三','四','五','六'][d.getDay()]}) - ${typeName}</span>
-                                  <span>${hours.toFixed(2)}hrs / <strong>${formatMoney(dayWage)}</strong></span>`;
-                container.appendChild(item);
-            }
-        });
-
-        if (activeWeeks.size === 0) {
-            container.innerHTML = '<div class="empty-text">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入班表」。</small></div>';
-        }
-
-        const totalPpe = activeWeeks.size * ppe;
-        const gross = totalWage + totalPpe;
-        const tax = gross * (taxRate / 100);
-        const net = gross - tax;
-        const finalSavings = net - totalExpenses;
-
-        // 更新舊的總結區塊
-        document.getElementById('summary-wage-subtotal').innerText = formatMoney(totalWage);
-        document.getElementById('summary-ppe').innerText = formatMoney(totalPpe);
-        document.getElementById('summary-gross').innerText = formatMoney(gross);
-        document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
-        document.getElementById('summary-net').innerText = formatMoney(net);
-
-        // 更新新的支出與儲蓄區塊
-        document.getElementById('summary-total-expenses').innerText = '-' + formatMoney(totalExpenses);
-        document.getElementById('summary-savings-remains').innerText = formatMoney(finalSavings);
-
-        // 更新存錢進度條
-        const progressBar = document.getElementById('progress-bar');
-        const progressPercent = document.getElementById('progress-percent');
-        const progressBarText = document.getElementById('progress-bar-text');
-
-        if (target > 0) {
-            let pct = Math.min(100, Math.max(0, (finalSavings / target) * 100));
-            progressBar.style.width = pct + '%';
-            progressPercent.innerText = pct.toFixed(1) + '%';
-            
-            if (finalSavings >= target) {
-                progressBarText.innerText = '恭喜達成目標！🎉';
-            } else {
-                progressBarText.innerText = '還差 ' + formatMoney(target - finalSavings);
-            }
-        } else {
-            progressBar.style.width = '0%';
-            progressPercent.innerText = '0%';
-            progressBarText.innerText = '未設定目標金額';
-        }
-
-        document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(shiftData)));
-    }
-
-    function toggleAccordion() {
-        const content = document.getElementById('accordion-content');
-        const arrow = document.getElementById('accordion-arrow');
-        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
-        else { content.style.display = 'block'; arrow.innerText = '▲'; }
-    }
-
-    function copyBackup() {
-        const tx = document.getElementById('backup-data');
-        tx.select(); document.execCommand('copy'); alert('備份字串已複製！');
-    }
-
-    function importData() {
-        const str = prompt('請貼入備份字串：');
-        if (str) {
-            try {
-                shiftData = JSON.parse(decodeURIComponent(atob(str)));
-                localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-                renderCalendar();
-                alert('還原成功！');
-            } catch(e) { alert('字串格式錯誤，還原失敗！'); }
-        }
-    }
-
-    window.onload = init;
-</script>
-
+    </script>
 </body>
 </html>
