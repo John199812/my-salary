@@ -64,6 +64,11 @@
         .day.selected.has-shift::after { background: white; }
         .day.other-month { color: #cbd5e1; }
 
+        .continuous-notice {
+            background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 12px;
+            padding: 6px 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-weight: bold; display: none;
+        }
+
         /* 表單 */
         .form-group { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
         .form-group:last-child { border-bottom: none; }
@@ -83,6 +88,8 @@
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
         
+        .btn-toggle-active { background: #dbeafe; border: 2px solid var(--primary); color: var(--primary); }
+
         /* 明細清單 */
         .empty-text { color: #94a3b8; text-align: center; padding: 20px 0; font-size: 14px; line-height: 1.6; }
         .shift-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
@@ -127,7 +134,7 @@
         <div class="section-title" data-i18n="secSalary">薪資與津貼設定</div>
         <div class="form-group">
             <label data-i18n="lblBaseRate">基礎時薪 (Base Rate)</label>
-            <input type="number" id="base-rate" value="0.00" step="0.1" onchange="saveSettings()">
+            <input type="number" id="base-rate" placeholder="0" value="" step="0.1" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label data-i18n="lblCasual">Casual 加給 (%)</label>
@@ -139,15 +146,15 @@
         </div>
         <div class="form-group">
             <label data-i18n="lblSunday">星期日加成率 (%)</label>
-            <input type="number" id="sunday-loading" value="0" onchange="saveSettings()">
+            <input type="number" id="sunday-loading" placeholder="0" value="" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label data-i18n="lblDouble">Double 雙倍薪資 (%)</label>
-            <input type="number" id="double-loading" value="0" onchange="saveSettings()">
+            <input type="number" id="double-loading" placeholder="0" value="" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label data-i18n="lblPpe">PPE 工具每週津貼</label>
-            <input type="number" id="ppe-allowance" value="0.00" step="0.5" onchange="saveSettings()">
+            <input type="number" id="ppe-allowance" placeholder="0" value="" step="0.5" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label data-i18n="lblTax">預估扣稅扣繳</label>
@@ -165,29 +172,32 @@
         <div class="section-title" data-i18n="secGoal">🎯 存錢目標與支出記帳</div>
         <div class="form-group">
             <label style="color: #059669; font-weight: bold;" data-i18n="lblSaveTarget">設定存錢目標金額</label>
-            <input type="number" id="save-target" value="0" step="100" onchange="saveSettings()">
+            <input type="number" id="save-target" placeholder="0" value="" step="100" onchange="saveSettings()">
         </div>
         <div style="margin: 10px 0 6px 0; font-size: 13px; font-weight: bold; color: #475569;" data-i18n="secExpHead">💸 預估開銷支出紀錄</div>
         <div class="form-group">
             <label data-i18n="lblExpRent">預估房租總額</label>
-            <input type="number" id="exp-rent" value="0" step="10" onchange="saveSettings()">
+            <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label data-i18n="lblExpGroceries">食材與生活物資</label>
-            <input type="number" id="exp-groceries" value="0" step="10" onchange="saveSettings()">
+            <input type="number" id="exp-groceries" placeholder="0" value="" step="10" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label data-i18n="lblExpTransport">交通油錢支出</label>
-            <input type="number" id="exp-transport" value="0" step="5" onchange="saveSettings()">
+            <input type="number" id="exp-transport" placeholder="0" value="" step="5" onchange="saveSettings()">
         </div>
         <div class="form-group">
             <label data-i18n="lblExpOthers">其他娛樂與雜支</label>
-            <input type="number" id="exp-others" value="0" step="5" onchange="saveSettings()">
+            <input type="number" id="exp-others" placeholder="0" value="" step="5" onchange="saveSettings()">
         </div>
     </div>
 
     <!-- 2. 日曆 -->
     <div class="card">
+        <div id="continuous-notice" class="continuous-notice" data-i18n="msgContinuousActive">
+            ⚡ 連續新增模式開啟中：點擊日曆日期即可直接套用排班設定！
+        </div>
         <div class="calendar-header">
             <button onclick="changeMonth(-1)" style="border:none;background:none;cursor:pointer;font-weight:bold;">&lt;</button>
             <span id="calendar-month-year" style="font-weight: bold;">2026年7月</span>
@@ -198,7 +208,7 @@
 
     <!-- 3. 排班操作 -->
     <div class="card">
-        <div class="section-title"><span data-i18n="secShiftOp">當日排班操作</span> (<span id="selected-date-str">請選擇日期</span>)</div>
+        <div class="section-title"><span data-i18n="secShiftOp">當日排班操作</span> (<span id="selected-date-str">未選擇日期</span>)</div>
         <div class="form-group">
             <label data-i18n="lblShiftType">排班類型</label>
             <select id="shift-type" onchange="toggleShiftInputs()">
@@ -220,14 +230,17 @@
             </div>
             <div class="form-group">
                 <label data-i18n="lblBreakTime">扣除 Smoko (分鐘)</label>
-                <input type="number" id="break-time" value="30">
+                <input type="number" id="break-time" placeholder="0" value="30">
             </div>
         </div>
 
         <div class="btn-stack">
-            <button class="btn btn-primary" onclick="saveCurrentShift()" data-i18n="btnSaveShift">確定排入班表 (單日)</button>
             <div class="btn-group">
-                <button class="btn btn-outline" onclick="fillWeek()" data-i18n="btnFillWeek">一鍵填滿本週</button>
+                <button class="btn btn-primary" onclick="saveCurrentShift()" data-i18n="btnSaveShift">確定排入班表 (單日)</button>
+                <button class="btn btn-outline" onclick="deselectDate()" data-i18n="btnDeselect">取消選取</button>
+            </div>
+            <div class="btn-group">
+                <button id="btn-continuous" class="btn btn-outline" onclick="toggleContinuousMode()" data-i18n="btnContinuousOff">🔄 連續新增模式：關</button>
                 <button class="btn btn-outline" onclick="clearMonthShifts()" data-i18n="btnClearMonth">清空數據</button>
             </div>
             <button class="btn btn-save" onclick="manualSaveAll()" data-i18n="btnManualSave">💾 手動儲存所有變更</button>
@@ -317,7 +330,8 @@
     let currentLang = 'zh';
     const FX_RATE = 22.63;
     let currentDate = new Date(2026, 6, 20); 
-    let selectedDate = new Date(2026, 6, 20);
+    let selectedDate = null;
+    let isContinuousMode = false;
     let shiftData = {};
 
     // 繁/英/日/韓 多國語言翻譯庫
@@ -356,7 +370,10 @@
             lblEndTime: "下班時間",
             lblBreakTime: "扣除 Smoko (分鐘)",
             btnSaveShift: "確定排入班表 (單日)",
-            btnFillWeek: "一鍵填滿本週",
+            btnDeselect: "取消選取",
+            btnContinuousOff: "🔄 連續新增模式：關",
+            btnContinuousOn: "⚡ 連續新增模式：開啟中",
+            msgContinuousActive: "⚡ 連續新增模式開啟中：點擊日曆日期即可直接套用排班設定！",
             btnClearMonth: "清空數據",
             btnManualSave: "💾 手動儲存所有變更",
             secShiftList: "已排定班表明細 (全部日期)",
@@ -374,7 +391,7 @@
             backupDesc: "複製下方文字即可備份；將備份文字貼入下方並點擊匯入即可還原。",
             btnCopyBackup: "複製備份資料",
             btnImportBackup: "匯入還原資料",
-            selectDatePrompt: "請選擇日期",
+            selectDatePrompt: "未選擇日期",
             weekdays: ['日', '一', '二', '三', '四', '五', '六'],
             goalCongrats: "恭喜達成目標！🎉",
             goalRemaining: "還差 ",
@@ -413,8 +430,11 @@
             lblStartTime: "Start Time",
             lblEndTime: "End Time",
             lblBreakTime: "Deduct Smoko (Mins)",
-            btnSaveShift: "Save Shift (Single Day)",
-            btnFillWeek: "Fill Current Week",
+            btnSaveShift: "Save Shift (Single)",
+            btnDeselect: "Deselect",
+            btnContinuousOff: "🔄 Auto-Add Mode: OFF",
+            btnContinuousOn: "⚡ Auto-Add Mode: ON",
+            msgContinuousActive: "⚡ Auto-Add Active: Click calendar dates to apply current shift settings directly!",
             btnClearMonth: "Clear All Data",
             btnManualSave: "💾 Save All Changes",
             secShiftList: "Scheduled Shifts List",
@@ -432,7 +452,7 @@
             backupDesc: "Copy text below to backup; paste text below and click import to restore.",
             btnCopyBackup: "Copy Backup Text",
             btnImportBackup: "Import Data",
-            selectDatePrompt: "Select Date",
+            selectDatePrompt: "No date selected",
             weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             goalCongrats: "Goal Reached! 🎉",
             goalRemaining: "Need ",
@@ -472,7 +492,10 @@
             lblEndTime: "退勤時間",
             lblBreakTime: "休憩時間 (分)",
             btnSaveShift: "シフトを保存 (1日)",
-            btnFillWeek: "今週を一括入力",
+            btnDeselect: "選擇解除",
+            btnContinuousOff: "🔄 連續追加: OFF",
+            btnContinuousOn: "⚡ 連續追加: ON",
+            msgContinuousActive: "⚡ 連續追加モード中：カレンダーの日付をタップして適用！",
             btnClearMonth: "データを消去",
             btnManualSave: "💾 變更を保存",
             secShiftList: "確定シフト一覧",
@@ -490,7 +513,7 @@
             backupDesc: "下のテキストをコピーしてバックアップ。貼り付けて復元できます。",
             btnCopyBackup: "バックアップをコピー",
             btnImportBackup: "データを復元",
-            selectDatePrompt: "日付を選択",
+            selectDatePrompt: "日付未選擇",
             weekdays: ['日', '月', '火', '水', '木', '金', '土'],
             goalCongrats: "目標達成！🎉",
             goalRemaining: "殘り ",
@@ -530,7 +553,10 @@
             lblEndTime: "퇴근 시간",
             lblBreakTime: "휴게 시간 (분)",
             btnSaveShift: "근무 일정 저장 (1일)",
-            btnFillWeek: "이번 주 자동 채우기",
+            btnDeselect: "선택 취소",
+            btnContinuousOff: "🔄 연속 추가 모드: OFF",
+            btnContinuousOn: "⚡ 연속 추가 모드: ON",
+            msgContinuousActive: "⚡ 연속 추가 모드 활성화: 날짜를 클릭하여 바로 적용하세요!",
             btnClearMonth: "데이터 초기화",
             btnManualSave: "💾 모든 변경사항 저장",
             secShiftList: "근무 일정 상세 목록",
@@ -548,7 +574,7 @@
             backupDesc: "아래 텍스트를 복사하여 백업하고, 붙여넣어 복원할 수 있습니다.",
             btnCopyBackup: "백업 텍스트 복사",
             btnImportBackup: "데이터 복원",
-            selectDatePrompt: "날짜를 선택하세요",
+            selectDatePrompt: "날짜 미선택",
             weekdays: ['일', '월', '화', '수', '목', '금', '토'],
             goalCongrats: "목표 달성 축하합니다! 🎉",
             goalRemaining: "남은 금액 ",
@@ -571,7 +597,7 @@
         loadSettings();
         applyLanguage();
         renderCalendar();
-        selectDate(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        deselectDate();
     }
 
     function changeLanguage(lang) {
@@ -579,6 +605,8 @@
         localStorage.setItem('goalpay_lang', lang);
         applyLanguage();
         renderCalendar();
+        updateSelectedDateDisplay();
+        updateContinuousBtnUI();
     }
 
     function applyLanguage() {
@@ -663,8 +691,7 @@
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        if(currentLang === 'zh') document.getElementById('calendar-month-year').innerText = `${year}年${month + 1}月`;
-        else if(currentLang === 'ja') document.getElementById('calendar-month-year').innerText = `${year}年${month + 1}月`;
+        if(currentLang === 'zh' || currentLang === 'ja') document.getElementById('calendar-month-year').innerText = `${year}年${month + 1}月`;
         else if(currentLang === 'ko') document.getElementById('calendar-month-year').innerText = `${year}년 ${month + 1}월`;
         else document.getElementById('calendar-month-year').innerText = `${month + 1}/${year}`;
 
@@ -688,7 +715,7 @@
             const el = document.createElement('div'); el.className = 'day'; el.innerText = d;
             const dateStr = formatDateKey(new Date(year, month, d));
             if (shiftData[dateStr] && shiftData[dateStr].type !== 'none') el.classList.add('has-shift');
-            if (selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d) el.classList.add('selected');
+            if (selectedDate && selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d) el.classList.add('selected');
             el.onclick = () => selectDate(year, month, d);
             grid.appendChild(el);
         }
@@ -701,21 +728,62 @@
 
     function selectDate(y, m, d) {
         selectedDate = new Date(y, m, d);
+        updateSelectedDateDisplay();
+
+        if (isContinuousMode) {
+            saveCurrentShift();
+        } else {
+            const dateStr = formatDateKey(selectedDate);
+            if (shiftData[dateStr]) {
+                document.getElementById('shift-type').value = shiftData[dateStr].type;
+                document.getElementById('start-time').value = shiftData[dateStr].start;
+                document.getElementById('end-time').value = shiftData[dateStr].end;
+                document.getElementById('break-time').value = shiftData[dateStr].breakMin;
+            } else {
+                document.getElementById('shift-type').value = 'none';
+            }
+            toggleShiftInputs();
+        }
+        renderCalendar();
+    }
+
+    function deselectDate() {
+        selectedDate = null;
+        updateSelectedDateDisplay();
+        document.getElementById('shift-type').value = 'none';
+        toggleShiftInputs();
+        renderCalendar();
+    }
+
+    function updateSelectedDateDisplay() {
+        if (!selectedDate) {
+            document.getElementById('selected-date-str').innerText = translations[currentLang].selectDatePrompt;
+            return;
+        }
+        const m = selectedDate.getMonth();
+        const d = selectedDate.getDate();
         if(currentLang === 'zh' || currentLang === 'ja') document.getElementById('selected-date-str').innerText = `${m+1}月${d}日`;
         else if(currentLang === 'ko') document.getElementById('selected-date-str').innerText = `${m+1}월 ${d}일`;
         else document.getElementById('selected-date-str').innerText = `${m+1}/${d}`;
+    }
 
-        const dateStr = formatDateKey(selectedDate);
-        if (shiftData[dateStr]) {
-            document.getElementById('shift-type').value = shiftData[dateStr].type;
-            document.getElementById('start-time').value = shiftData[dateStr].start;
-            document.getElementById('end-time').value = shiftData[dateStr].end;
-            document.getElementById('break-time').value = shiftData[dateStr].breakMin;
+    function toggleContinuousMode() {
+        isContinuousMode = !isContinuousMode;
+        updateContinuousBtnUI();
+    }
+
+    function updateContinuousBtnUI() {
+        const btn = document.getElementById('btn-continuous');
+        const notice = document.getElementById('continuous-notice');
+        if (isContinuousMode) {
+            btn.classList.add('btn-toggle-active');
+            btn.innerText = translations[currentLang].btnContinuousOn;
+            notice.style.display = 'block';
         } else {
-            document.getElementById('shift-type').value = 'none';
+            btn.classList.remove('btn-toggle-active');
+            btn.innerText = translations[currentLang].btnContinuousOff;
+            notice.style.display = 'none';
         }
-        toggleShiftInputs();
-        calculateAll();
     }
 
     function toggleShiftInputs() {
@@ -724,31 +792,16 @@
     }
 
     function saveCurrentShift() {
+        if (!selectedDate) {
+            const msgs = { zh: '請先選擇日期！', en: 'Please select a date first!', ja: '日付を選択してください！', ko: '날짜를 먼저 선택하세요!' };
+            alert(msgs[currentLang] || msgs.zh);
+            return;
+        }
         const dateStr = formatDateKey(selectedDate);
         const type = document.getElementById('shift-type').value;
         if(type === 'none') { delete shiftData[dateStr]; }
         else {
             shiftData[dateStr] = {
-                type: type,
-                start: document.getElementById('start-time').value,
-                end: document.getElementById('end-time').value,
-                breakMin: parseInt(document.getElementById('break-time').value) || 0
-            };
-        }
-        localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-        renderCalendar();
-    }
-
-    function fillWeek() {
-        const currentDayOfWeek = selectedDate.getDay();
-        const mondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
-        const type = document.getElementById('shift-type').value;
-        if(type === 'none') return;
-
-        for(let i=0; i<5; i++) {
-            const targetDate = new Date(selectedDate);
-            targetDate.setDate(selectedDate.getDate() + mondayOffset + i);
-            shiftData[formatDateKey(targetDate)] = {
                 type: type,
                 start: document.getElementById('start-time').value,
                 end: document.getElementById('end-time').value,
