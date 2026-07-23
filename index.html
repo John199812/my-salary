@@ -23,6 +23,9 @@
             --orange: #f97316;
             --red: #ef4444;
         }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
@@ -55,7 +58,7 @@
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
         .weekday { font-size: 12px; font-weight: bold; color: #94a3b8; padding: 4px 0; }
-        .day { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; border-radius: 8px; cursor: pointer; position: relative; font-weight: 500; }
+        .day { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; border-radius: 8px; cursor: pointer; position: relative; font-weight: 500; user-select: none; }
         .day:hover { background: #f1f5f9; }
         .day.selected { background: var(--primary) !important; color: white; }
         .day.has-shift::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: var(--orange); border-radius: 50%; }
@@ -77,7 +80,7 @@
         .progress-text { position: absolute; right: 8px; top: 0; font-size: 11px; font-weight: bold; color: #475569; line-height: 16px; }
 
         .btn-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; box-sizing: border-box; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-save { background: #16a34a; color: white; }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -98,7 +101,6 @@
         .accordion-content { display: none; padding: 12px; background: #fff; border: 1px solid var(--border); border-top: none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
         textarea { width: 100%; height: 80px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; box-sizing: border-box; font-size: 12px; margin-bottom: 8px; }
 
-        /* 統計區間標籤 */
         .date-range-badge {
             background: #f1f5f9; color: #475569; font-size: 12px; font-weight: bold;
             padding: 6px 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border);
@@ -149,6 +151,10 @@
             <input type="number" id="double-loading" placeholder="0" value="" onchange="saveSettings()">
         </div>
         <div class="form-group">
+            <label data-i18n="lblOtHours">每日加班門檻 (小時)</label>
+            <input type="number" id="ot-threshold" placeholder="無" value="8" step="0.5" onchange="saveSettings()">
+        </div>
+        <div class="form-group">
             <label data-i18n="lblPpe">PPE 工具每週津貼</label>
             <input type="number" id="ppe-allowance" placeholder="0" value="" step="0.5" onchange="saveSettings()">
         </div>
@@ -172,7 +178,6 @@
         </div>
         <div style="margin: 10px 0 6px 0; font-size: 13px; font-weight: bold; color: #475569;" data-i18n="secExpHead">💸 預估開銷支出紀錄</div>
         <div class="form-group">
-            <!-- 優化1: 改為每週預估房租 -->
             <label data-i18n="lblExpRent">每週預估房租</label>
             <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()">
         </div>
@@ -231,7 +236,6 @@
             </div>
         </div>
 
-        <!-- 當日隨手記額外支出 -->
         <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px;">
             <label style="color: var(--orange); font-weight: bold;" data-i18n="lblDailyExpense">💸 當日隨手記支出</label>
             <input type="number" id="daily-expense" placeholder="0" value="" step="1" onchange="saveDailyExpense()">
@@ -250,7 +254,7 @@
         </div>
     </div>
 
-    <!-- 優化2: 排定班表明細（改為可摺疊式下拉選單） -->
+    <!-- 4. 排定班表明細 -->
     <div style="margin-bottom: 16px;">
         <div class="accordion-header" onclick="toggleShiftAccordion()">
             <span><span data-i18n="secShiftList">已排定班表明細</span> <span id="shift-summary-count">(0天 / 0hrs)</span></span>
@@ -260,6 +264,7 @@
             <div id="week-shifts-container">
                 <div class="empty-text" data-i18n="emptyShiftMsg">目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入班表」。</small></div>
             </div>
+            <button class="btn btn-outline" style="margin-top: 12px; font-size: 13px;" onclick="exportToCSV()" data-i18n="btnExportCSV">📊 匯出班表與薪資報表 (CSV)</button>
         </div>
     </div>
 
@@ -267,7 +272,6 @@
     <div class="card">
         <div class="section-title" data-i18n="secFinSummary">整體財務預估總結</div>
         
-        <!-- 優化3: 新增計算截止日期與統計區間標籤 -->
         <div class="date-range-badge">
             <span data-i18n="lblDateRange">📅 統計區間</span>
             <span id="summary-date-range" style="color: var(--primary);">未排定班表</span>
@@ -290,7 +294,6 @@
             <span id="summary-tax">-$0.00</span>
         </div>
         
-        <!-- 綠色實領預估框 -->
         <div class="net-pay-box">
             <div class="net-pay-title" data-i18n="lblNetPayTitle">實領預估總計（稅後淨所得）</div>
             <div class="net-pay-amount">
@@ -300,7 +303,6 @@
             </div>
         </div>
 
-        <!-- 支出與儲蓄 -->
         <div class="summary-row" style="color: var(--red); margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 8px;">
             <span><span data-i18n="lblTotalExp">預估開銷總支出</span> (<span class="curr-txt">AUD</span>)</span>
             <span id="summary-total-expenses">-$0.00</span>
@@ -310,7 +312,6 @@
             <span id="summary-savings-remains">$0.00</span>
         </div>
 
-        <!-- 存錢進度條 -->
         <div style="margin-top: 10px;">
             <div style="display: flex; justify-content: space-between; font-size: 12px; color: #475569;">
                 <span data-i18n="lblGoalProgress">🎯 存錢目標達成進度</span>
@@ -348,9 +349,8 @@
     let selectedDate = null;
     let isContinuousMode = false;
     let shiftData = {};
-    let dailyExpenses = {}; // 儲存當日隨手記開銷
+    let dailyExpenses = {};
 
-    // 繁/英/日/韓 多國語言翻譯庫
     const translations = {
         zh: {
             appTitle: "GoalPay 薪資與排班預估",
@@ -362,6 +362,7 @@
             optCasual0: "0% (正職/無加給)",
             lblSunday: "星期日加成率 (%)",
             lblDouble: "Double 雙倍薪資 (%)",
+            lblOtHours: "每日加班門檻 (小時)",
             lblPpe: "PPE 工具每週津貼",
             lblTax: "預估扣稅扣繳",
             optTax15: "15% (背包客低於45k)",
@@ -395,6 +396,7 @@
             btnManualSave: "💾 手動儲存所有變更",
             secShiftList: "已排定班表明細",
             emptyShiftMsg: "目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入班表」。</small>",
+            btnExportCSV: "📊 匯出班表與薪資報表 (CSV)",
             secFinSummary: "整體財務預估總結",
             lblDateRange: "📅 統計區間",
             lblSumWage: "班表薪資總計",
@@ -426,6 +428,7 @@
             optCasual0: "0% (Full-time / None)",
             lblSunday: "Sunday Loading (%)",
             lblDouble: "Double Pay (%)",
+            lblOtHours: "Daily OT Threshold (hrs)",
             lblPpe: "Weekly PPE Allowance",
             lblTax: "Estimated Tax Rate",
             optTax15: "15% (WHV < $45k)",
@@ -459,6 +462,7 @@
             btnManualSave: "💾 Save All Changes",
             secShiftList: "Scheduled Shifts List",
             emptyShiftMsg: "No schedule records.<br><small>Select a date above, set hours, and click 'Save Shift'.</small>",
+            btnExportCSV: "📊 Export Shifts to CSV",
             secFinSummary: "Financial Summary",
             lblDateRange: "📅 Date Range",
             lblSumWage: "Wage Subtotal",
@@ -490,6 +494,7 @@
             optCasual0: "0% (正社員/なし)",
             lblSunday: "日曜日割増率 (%)",
             lblDouble: "Double 倍額手當 (%)",
+            lblOtHours: "殘業発生時間 (時間)",
             lblPpe: "週額 PPE 手當",
             lblTax: "源泉徴収稅率（預想）",
             optTax15: "15% (ワーホリ 45k未満)",
@@ -523,6 +528,7 @@
             btnManualSave: "💾 變更を保存",
             secShiftList: "確定シフト一覧",
             emptyShiftMsg: "シフトの記錄がありません<br><small>カレンダーから日付を選択し、シフトを入力してください。</small>",
+            btnExportCSV: "📊 CSVレポートを出力",
             secFinSummary: "財務預想サマリー",
             lblDateRange: "📅 統計期間",
             lblSumWage: "給與小計",
@@ -554,6 +560,7 @@
             optCasual0: "0% (정규직/없음)",
             lblSunday: "일요일 가산율 (%)",
             lblDouble: "Double 휴일 수당 (%)",
+            lblOtHours: "초과 근무 기준 (시간)",
             lblPpe: "주당 PPE 장비 수당",
             lblTax: "예상 세율",
             optTax15: "15% (워홀 $45k 이하)",
@@ -587,6 +594,7 @@
             btnManualSave: "💾 모든 변경사항 저장",
             secShiftList: "근무 일정 상세 목록",
             emptyShiftMsg: "등록된 근무 일정이 없습니다.<br><small>달력에서 날짜를 선택 후 시간을 입력해 주세요.</small>",
+            btnExportCSV: "📊 근무 리포트 다운로드 (CSV)",
             secFinSummary: "재정 예상 요약",
             lblDateRange: "📅 통계 기간",
             lblSumWage: "근무 수당 총액",
@@ -657,6 +665,7 @@
             casualLoading: document.getElementById('casual-loading').value,
             sundayLoading: document.getElementById('sunday-loading').value,
             doubleLoading: document.getElementById('double-loading').value,
+            otThreshold: document.getElementById('ot-threshold').value,
             ppeAllowance: document.getElementById('ppe-allowance').value,
             taxRate: document.getElementById('tax-rate').value,
             saveTarget: document.getElementById('save-target').value,
@@ -677,6 +686,7 @@
                 if(settings.casualLoading !== undefined) document.getElementById('casual-loading').value = settings.casualLoading;
                 if(settings.sundayLoading !== undefined) document.getElementById('sunday-loading').value = settings.sundayLoading;
                 if(settings.doubleLoading !== undefined) document.getElementById('double-loading').value = settings.doubleLoading;
+                if(settings.otThreshold !== undefined) document.getElementById('ot-threshold').value = settings.otThreshold;
                 if(settings.ppeAllowance !== undefined) document.getElementById('ppe-allowance').value = settings.ppeAllowance;
                 if(settings.taxRate !== undefined) document.getElementById('tax-rate').value = settings.taxRate;
                 if(settings.saveTarget !== undefined) document.getElementById('save-target').value = settings.saveTarget;
@@ -770,9 +780,9 @@
         } else {
             if (shiftData[dateStr]) {
                 document.getElementById('shift-type').value = shiftData[dateStr].type;
-                document.getElementById('start-time').value = shiftData[dateStr].start;
-                document.getElementById('end-time').value = shiftData[dateStr].end;
-                document.getElementById('break-time').value = shiftData[dateStr].breakMin;
+                document.getElementById('start-time').value = shiftData[dateStr].start || '07:00';
+                document.getElementById('end-time').value = shiftData[dateStr].end || '15:00';
+                document.getElementById('break-time').value = shiftData[dateStr].breakMin !== undefined ? shiftData[dateStr].breakMin : 30;
             } else {
                 document.getElementById('shift-type').value = 'none';
             }
@@ -875,11 +885,21 @@
         return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
     }
 
+    function calculateShiftHours(startTimeStr, endTimeStr, breakMinutes) {
+        if (!startTimeStr || !endTimeStr) return 0;
+        const [sH, sM] = startTimeStr.split(':').map(Number);
+        let [eH, eM] = endTimeStr.split(':').map(Number);
+        if (eH < sH || (eH === sH && eM < sM)) eH += 24;
+        const mins = (eH * 60 + eM) - (sH * 60 + sM) - (parseInt(breakMinutes) || 0);
+        return Math.max(0, mins / 60);
+    }
+
     function calculateAll() {
         const base = parseFloat(document.getElementById('base-rate').value) || 0;
         const casual = parseFloat(document.getElementById('casual-loading').value) || 0;
         const sundayLoad = parseFloat(document.getElementById('sunday-loading').value) || 0;
         const doubleLoad = parseFloat(document.getElementById('double-loading').value) || 0;
+        const otThreshold = parseFloat(document.getElementById('ot-threshold').value) || 0;
         const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
         const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
         
@@ -907,7 +927,6 @@
             ko: { day: '주간', night: '야간', sunday: '일요일', double: 'Double' }
         };
 
-        // 計算區間與日期顯示
         if (sortedKeys.length > 0) {
             const startDate = sortedKeys[0];
             const endDate = sortedKeys[sortedKeys.length - 1];
@@ -924,12 +943,7 @@
                 const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
                 activeWeeks.add(weekKey);
 
-                const [sH, sM] = shift.start.split(':').map(Number);
-                let [eH, eM] = shift.end.split(':').map(Number);
-                if (eH < sH || (eH === sH && eM < sM)) eH += 24;
-                
-                let mins = (eH * 60 + eM) - (sH * 60 + sM) - shift.breakMin;
-                const hours = Math.max(0, mins / 60);
+                const hours = calculateShiftHours(shift.start, shift.end, shift.breakMin);
                 totalHours += hours;
 
                 let rate = base * (1 + casual / 100);
@@ -939,7 +953,15 @@
                 else if (shift.type === 'sunday') { rate = base * (1 + sundayLoad / 100); }
                 else if (shift.type === 'double') { rate = base * (1 + doubleLoad / 100); }
 
-                const dayWage = hours * rate;
+                let dayWage = 0;
+                if (otThreshold > 0 && hours > otThreshold) {
+                    const normalHours = otThreshold;
+                    const otHours = hours - otThreshold;
+                    dayWage = (normalHours * rate) + (otHours * rate * 1.5);
+                } else {
+                    dayWage = hours * rate;
+                }
+
                 totalWage += dayWage;
 
                 const item = document.createElement('div');
@@ -951,18 +973,15 @@
             }
         });
 
-        // 更新班表明細標頭數量
         document.getElementById('shift-summary-count').innerText = `(${shiftDaysCount}天 / ${totalHours.toFixed(2)}hrs)`;
 
         if (activeWeeks.size === 0) {
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
         }
 
-        // 計算當日隨手記總支出
         let totalDailyExpenses = 0;
         Object.values(dailyExpenses).forEach(val => totalDailyExpenses += (parseFloat(val) || 0));
 
-        // 預估每週固定開銷（根據涵蓋的週數計算）
         const totalWeeksCount = Math.max(1, activeWeeks.size);
         const totalFixedExpenses = (rent + groceries + transport + others) * totalWeeksCount;
         const totalExpenses = totalFixedExpenses + totalDailyExpenses;
@@ -1002,7 +1021,6 @@
             progressBarText.innerText = translations[currentLang].goalUnset;
         }
 
-        // 備份資料包包含排班與隨手記開銷
         const backupPayload = { shifts: shiftData, expenses: dailyExpenses };
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(backupPayload)));
     }
@@ -1021,10 +1039,17 @@
         else { content.style.display = 'block'; arrow.innerText = '▲'; }
     }
 
-    function copyBackup() {
+    async function copyBackup() {
         const tx = document.getElementById('backup-data');
-        tx.select(); document.execCommand('copy'); 
-        alert('Copied / 已複製');
+        try {
+            await navigator.clipboard.writeText(tx.value);
+            const msgs = { zh: '✅ 已複製備份文字！', en: '✅ Copied to clipboard!', ja: '✅ コピーしました！', ko: '✅ 복사되었습니다!' };
+            alert(msgs[currentLang] || msgs.zh);
+        } catch (err) {
+            tx.select();
+            document.execCommand('copy');
+            alert('Copied / 已複製');
+        }
     }
 
     function importData() {
@@ -1032,18 +1057,48 @@
         if (str) {
             try {
                 const parsed = JSON.parse(decodeURIComponent(atob(str)));
-                if (parsed.shifts) {
-                    shiftData = parsed.shifts || {};
-                    dailyExpenses = parsed.expenses || {};
+                if (parsed && typeof parsed === 'object') {
+                    if (parsed.shifts) {
+                        shiftData = parsed.shifts || {};
+                        dailyExpenses = parsed.expenses || {};
+                    } else {
+                        shiftData = parsed;
+                    }
+                    localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
+                    localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
+                    renderCalendar();
+                    alert('Restored / 還原成功！');
                 } else {
-                    shiftData = parsed; // 相容舊版格式
+                    throw new Error('Invalid format');
                 }
-                localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-                localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
-                renderCalendar();
-                alert('Restored / 還原成功！');
             } catch(e) { alert('Failed / 格式錯誤'); }
         }
+    }
+
+    function exportToCSV() {
+        const sortedKeys = Object.keys(shiftData).sort();
+        if (sortedKeys.length === 0) {
+            alert(translations[currentLang].noShifts);
+            return;
+        }
+
+        let csvContent = "\uFEFFDate,Type,Start Time,End Time,Break (Mins),Hours\n";
+        sortedKeys.forEach(dateStr => {
+            const shift = shiftData[dateStr];
+            if (shift && shift.type !== 'none') {
+                const hrs = calculateShiftHours(shift.start, shift.end, shift.breakMin);
+                csvContent += `"${dateStr}","${shift.type}","${shift.start}","${shift.end}",${shift.breakMin},${hrs.toFixed(2)}\n`;
+            }
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `GoalPay_Shifts_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     window.onload = init;
