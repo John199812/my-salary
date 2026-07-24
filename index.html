@@ -125,7 +125,6 @@
     <div class="header">
         <h1 data-i18n="appTitle">GoalPay 薪資與排班預估</h1>
         <div class="header-controls">
-            <!-- 🔄 強制檢查更新按鈕 -->
             <button class="refresh-btn" onclick="forceRefreshApp()" title="檢查並重新載入最新版本">
                 🔄 <span data-i18n="btnUpdate">更新</span>
             </button>
@@ -319,7 +318,6 @@
             </div>
         </div>
 
-        <!-- ➕ 新增：預估 Super 退休金提撥金專區 -->
         <div class="super-box">
             <span>🏦 <span data-i18n="lblSuperTitle">雇主預估提撥退休金 (Super 12%)</span></span>
             <strong id="summary-super">$0.00</strong>
@@ -669,7 +667,6 @@
         deselectDate();
     }
 
-    // 🔄 強制刷新網頁邏輯 (加上時間戳記繞過快取)
     function forceRefreshApp() {
         const msgs = {
             zh: "正在獲取最新版本並重新載入...",
@@ -1034,9 +1031,7 @@
         const tax = gross * (taxRate / 100);
         const net = gross - tax;
 
-        // ➕ 計算 Super (以毛薪的 12% 計算)
         const superAmount = totalWage * 0.12;
-
         const finalSavings = net - totalExpenses;
 
         document.getElementById('summary-wage-subtotal').innerText = formatMoney(totalWage);
@@ -1044,8 +1039,6 @@
         document.getElementById('summary-gross').innerText = formatMoney(gross);
         document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
         document.getElementById('summary-net').innerText = formatMoney(net);
-
-        // 顯示 Super 金額
         document.getElementById('summary-super').innerText = formatMoney(superAmount);
 
         document.getElementById('summary-total-expenses').innerText = '-' + formatMoney(totalExpenses);
