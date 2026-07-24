@@ -119,6 +119,22 @@
             padding: 6px 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
         }
+
+        /* 隨手支出介面優化樣式 */
+        .expense-add-box { display: flex; gap: 6px; width: 100%; margin-top: 6px; }
+        .expense-add-box input[type="text"] { flex: 2; text-align: left; }
+        .expense-add-box input[type="number"] { flex: 1; text-align: right; }
+        .btn-add-expense {
+            background: var(--orange); color: white; border: none; padding: 6px 12px;
+            border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; white-space: nowrap;
+        }
+        .expense-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 13px;
+        }
+        .btn-del-expense {
+            background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 2px 6px;
+        }
     </style>
 </head>
 <body>
@@ -264,9 +280,14 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px;">
-            <label style="color: var(--orange); font-weight: bold;" data-i18n="lblDailyExpense">💸 當日隨手記支出</label>
-            <input type="number" id="daily-expense" placeholder="0" value="" step="1" onchange="saveDailyExpense()">
+        <!-- 升級版當日隨手記支出輸入區 -->
+        <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; flex-direction: column; align-items: stretch;">
+            <label style="color: var(--orange); font-weight: bold; width: 100%; margin-bottom: 4px;" data-i18n="lblDailyExpense">💸 當日隨手記支出</label>
+            <div class="expense-add-box">
+                <input type="text" id="daily-expense-note" placeholder="項目備註 (如: 晚餐)" data-i18n-ph="phExpenseNote">
+                <input type="number" id="daily-expense-amount" placeholder="金額" data-i18n-ph="phExpenseAmount">
+                <button type="button" class="btn-add-expense" onclick="addDailyExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
+            </div>
         </div>
 
         <div class="btn-stack">
@@ -279,6 +300,19 @@
                 <button class="btn btn-outline" onclick="clearMonthShifts()" data-i18n="btnClearMonth">清空數據</button>
             </div>
             <button class="btn btn-save" onclick="manualSaveAll()" data-i18n="btnManualSave">💾 手動儲存所有變更</button>
+        </div>
+    </div>
+
+    <!-- 4.1 新增：當日隨手支出明細列表 (下拉式) -->
+    <div style="margin-bottom: 16px;">
+        <div class="accordion-header" onclick="toggleExpenseAccordion()">
+            <span><span data-i18n="secExpenseList">當日支出明細</span> <span id="expense-summary-count">(0筆 / $0.00)</span></span>
+            <span id="expense-accordion-arrow">▼</span>
+        </div>
+        <div class="accordion-content" id="expense-accordion-content">
+            <div id="daily-expense-container">
+                <div class="empty-text" data-i18n="emptyExpenseMsg">當日尚無隨手支出紀錄</div>
+            </div>
         </div>
     </div>
 
@@ -382,7 +416,7 @@
     let selectedDate = null;
     let isContinuousMode = false;
     let shiftData = {};
-    let dailyExpenses = {};
+    let dailyExpenses = {}; // 格式為 { "2026-07-24": [ {id: 123, note: "晚餐", amount: 51} ] }
 
     const translations = {
         zh: {
@@ -423,6 +457,11 @@
             lblEndTime: "下班時間",
             lblBreakTime: "扣除 Smoko (分鐘)",
             lblDailyExpense: "💸 當日隨手記支出",
+            phExpenseNote: "項目備註 (如: 晚餐)",
+            phExpenseAmount: "金額",
+            btnAddExpense: "➕ 增加",
+            secExpenseList: "當日支出明細",
+            emptyExpenseMsg: "當日尚無隨手支出紀錄",
             btnSaveShift: "確定排入班表 (單日)",
             btnDeselect: "取消選取",
             btnContinuousOff: "🔄 連續新增模式：關",
@@ -493,6 +532,11 @@
             lblEndTime: "End Time",
             lblBreakTime: "Deduct Smoko (Mins)",
             lblDailyExpense: "💸 Daily Extra Expense",
+            phExpenseNote: "Note (e.g. Dinner)",
+            phExpenseAmount: "Amount",
+            btnAddExpense: "➕ Add",
+            secExpenseList: "Daily Expense List",
+            emptyExpenseMsg: "No expense records for this date",
             btnSaveShift: "Save Shift (Single)",
             btnDeselect: "Deselect",
             btnContinuousOff: "🔄 Auto-Add Mode: OFF",
@@ -563,6 +607,11 @@
             lblEndTime: "退勤時間",
             lblBreakTime: "休憩時間 (分)",
             lblDailyExpense: "💸 當日臨時支出",
+            phExpenseNote: "メモ (例: 夕食)",
+            phExpenseAmount: "金額",
+            btnAddExpense: "➕ 追加",
+            secExpenseList: "當日支出內訳",
+            emptyExpenseMsg: "當日の支出記錄はありません",
             btnSaveShift: "シフトを保存 (1日)",
             btnDeselect: "選擇解除",
             btnContinuousOff: "🔄 連續追加: OFF",
@@ -633,6 +682,11 @@
             lblEndTime: "퇴근 시간",
             lblBreakTime: "휴게 시간 (분)",
             lblDailyExpense: "💸 당일 추가 지출",
+            phExpenseNote: "메모 (예: 저녁)",
+            phExpenseAmount: "금액",
+            btnAddExpense: "➕ 추가",
+            secExpenseList: "당일 지출 내역",
+            emptyExpenseMsg: "당일 지출 기록이 없습니다",
             btnSaveShift: "근무 일정 저장 (1일)",
             btnDeselect: "선택 취소",
             btnContinuousOff: "🔄 연속 추가 모드: OFF",
@@ -673,7 +727,16 @@
             if (loadedData) shiftData = JSON.parse(loadedData);
             
             const loadedExpenses = localStorage.getItem('dailyExpensesProMax');
-            if (loadedExpenses) dailyExpenses = JSON.parse(loadedExpenses);
+            if (loadedExpenses) {
+                let tempEx = JSON.parse(loadedExpenses);
+                // 兼容舊資料格式 (若以前是直接存數字，自動轉為陣列物件結構)
+                for (let k in tempEx) {
+                    if (typeof tempEx[k] === 'number') {
+                        tempEx[k] = [{ id: Date.now() + Math.random(), note: '隨手支出', amount: tempEx[k] }];
+                    }
+                }
+                dailyExpenses = tempEx;
+            }
         } catch(e) { shiftData = {}; dailyExpenses = {}; }
 
         const savedLang = localStorage.getItem('goalpay_lang');
@@ -686,6 +749,11 @@
         applyLanguage();
         renderCalendar();
         deselectDate();
+
+        // 綁定 Enter 鍵快速新增支出
+        document.getElementById('daily-expense-amount').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') addDailyExpenseItem();
+        });
     }
 
     function forceRefreshApp() {
@@ -715,6 +783,13 @@
             const key = el.getAttribute('data-i18n');
             if (langData[key]) {
                 el.innerHTML = langData[key];
+            }
+        });
+
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+            const key = el.getAttribute('data-i18n-ph');
+            if (langData[key]) {
+                el.placeholder = langData[key];
             }
         });
         calculateAll();
@@ -855,12 +930,13 @@
         selectedDate = new Date(y, m, d);
         updateSelectedDateDisplay();
 
-        const dateStr = formatDateKey(selectedDate);
-        document.getElementById('daily-expense').value = dailyExpenses[dateStr] || '';
+        document.getElementById('daily-expense-note').value = '';
+        document.getElementById('daily-expense-amount').value = '';
 
         if (isContinuousMode) {
             saveCurrentShift();
         } else {
+            const dateStr = formatDateKey(selectedDate);
             if (shiftData[dateStr]) {
                 document.getElementById('shift-type').value = shiftData[dateStr].type;
                 document.getElementById('start-time').value = shiftData[dateStr].start || '07:00';
@@ -874,21 +950,65 @@
         renderCalendar();
     }
 
-    function saveDailyExpense() {
-        if (!selectedDate) return;
+    // 新增當日隨手支出項目
+    function addDailyExpenseItem() {
+        if (!selectedDate) {
+            const msgs = { zh: '請先選擇日期！', en: 'Please select a date first!', ja: '日付を選択してください！', ko: '날짜를 먼저 선택하세요!' };
+            alert(msgs[currentLang] || msgs.zh);
+            return;
+        }
+
         const dateStr = formatDateKey(selectedDate);
-        const val = parseFloat(document.getElementById('daily-expense').value) || 0;
-        if (val > 0) dailyExpenses[dateStr] = val;
-        else delete dailyExpenses[dateStr];
+        const noteInput = document.getElementById('daily-expense-note');
+        const amountInput = document.getElementById('daily-expense-amount');
+
+        const note = noteInput.value.trim() || '隨手支出';
+        const amount = parseFloat(amountInput.value);
+
+        if (isNaN(amount) || amount <= 0) {
+            const msgs = { zh: '請輸入有效的金額！', en: 'Please enter a valid amount!', ja: '正確な金額を入力してください！', ko: '올바른 금액을 입력하세요!' };
+            alert(msgs[currentLang] || msgs.zh);
+            return;
+        }
+
+        if (!dailyExpenses[dateStr]) dailyExpenses[dateStr] = [];
+
+        dailyExpenses[dateStr].push({
+            id: Date.now() + Math.random(),
+            note: note,
+            amount: amount
+        });
+
         localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
+        
+        noteInput.value = '';
+        amountInput.value = '';
+        
+        // 自動展開支出明細選單方便確認
+        document.getElementById('expense-accordion-content').style.display = 'block';
+        document.getElementById('expense-accordion-arrow').innerText = '▲';
+
         calculateAll();
+    }
+
+    // 刪除單筆支出項目
+    function deleteExpenseItem(dateStr, itemId) {
+        if (dailyExpenses[dateStr]) {
+            dailyExpenses[dateStr] = dailyExpenses[dateStr].filter(item => item.id !== itemId);
+            if (dailyExpenses[dateStr].length === 0) {
+                delete dailyExpenses[dateStr];
+            }
+            localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
+            calculateAll();
+        }
     }
 
     function deselectDate() {
         selectedDate = null;
         updateSelectedDateDisplay();
         document.getElementById('shift-type').value = 'none';
-        document.getElementById('daily-expense').value = '';
+        document.getElementById('daily-expense-note').value = '';
+        document.getElementById('daily-expense-amount').value = '';
         toggleShiftInputs();
         renderCalendar();
     }
@@ -985,7 +1105,6 @@
         const otThreshold = parseFloat(document.getElementById('ot-threshold').value) || 0;
         const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
         
-        // 使用 getEffectiveTaxRate() 動態取得選取或自訂的稅率 %
         const taxRate = getEffectiveTaxRate();
         
         const target = parseFloat(document.getElementById('save-target').value) || 0;
@@ -1064,8 +1183,16 @@
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
         }
 
+        // 渲染當日隨手支出清單
+        renderDailyExpenseList();
+
+        // 計算全域隨手總支出
         let totalDailyExpenses = 0;
-        Object.values(dailyExpenses).forEach(val => totalDailyExpenses += (parseFloat(val) || 0));
+        Object.values(dailyExpenses).forEach(arr => {
+            if (Array.isArray(arr)) {
+                arr.forEach(item => totalDailyExpenses += (parseFloat(item.amount) || 0));
+            }
+        });
 
         const totalWeeksCount = Math.max(1, activeWeeks.size);
         const totalFixedExpenses = (rent + groceries + transport + others) * totalWeeksCount;
@@ -1111,6 +1238,52 @@
 
         const backupPayload = { shifts: shiftData, expenses: dailyExpenses };
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(backupPayload)));
+    }
+
+    // 渲染「當日隨手支出」明細列表
+    function renderDailyExpenseList() {
+        const container = document.getElementById('daily-expense-container');
+        const summaryCount = document.getElementById('expense-summary-count');
+        container.innerHTML = '';
+
+        if (!selectedDate) {
+            summaryCount.innerText = `(0筆 / $0.00)`;
+            container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyExpenseMsg}</div>`;
+            return;
+        }
+
+        const dateStr = formatDateKey(selectedDate);
+        const items = dailyExpenses[dateStr] || [];
+
+        let dayTotal = 0;
+        items.forEach(item => dayTotal += item.amount);
+
+        summaryCount.innerText = `(${items.length}筆 / ${formatMoney(dayTotal)})`;
+
+        if (items.length === 0) {
+            container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyExpenseMsg}</div>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'expense-item';
+            el.innerHTML = `
+                <span><strong>${item.note}</strong></span>
+                <div>
+                    <span style="font-weight: bold; margin-right: 8px;">${formatMoney(item.amount)}</span>
+                    <button class="btn-del-expense" onclick="deleteExpenseItem('${dateStr}', ${item.id})" title="刪除">🗑️</button>
+                </div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    function toggleExpenseAccordion() {
+        const content = document.getElementById('expense-accordion-content');
+        const arrow = document.getElementById('expense-accordion-arrow');
+        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
+        else { content.style.display = 'block'; arrow.innerText = '▲'; }
     }
 
     function toggleShiftAccordion() {
