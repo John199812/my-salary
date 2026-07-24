@@ -82,8 +82,10 @@
         .form-group { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
         .form-group:last-child { border-bottom: none; }
         label { font-size: 14px; font-weight: 500; }
-        input, select { border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: right; width: 130px; box-sizing: border-box; }
+        input, select { border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 14px; text-align: right; width: 140px; box-sizing: border-box; }
         
+        .custom-tax-box { display: none; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 6px; width: 100%; }
+
         .progress-container { background: #e2e8f0; border-radius: 8px; height: 16px; width: 100%; margin: 8px 0; overflow: hidden; position: relative; }
         .progress-bar { background: linear-gradient(90deg, #22c55e, #10b981); height: 100%; width: 0%; transition: width 0.3s ease; }
         .progress-text { position: absolute; right: 8px; top: 0; font-size: 11px; font-weight: bold; color: #475569; line-height: 16px; }
@@ -173,14 +175,25 @@
             <label data-i18n="lblPpe">PPE 工具每週津貼</label>
             <input type="number" id="ppe-allowance" placeholder="0" value="" step="0.5" onchange="saveSettings()">
         </div>
-        <div class="form-group">
-            <label data-i18n="lblTax">預估扣稅扣繳</label>
-            <select id="tax-rate" onchange="saveSettings()">
-                <option value="15" selected data-i18n="optTax15">15% (背包客低於45k)</option>
-                <option value="32.5" data-i18n="optTax325">32.5% (超過45k)</option>
-                <option value="12" data-i18n="optTax12">12% (自訂舊稅率)</option>
-                <option value="0" data-i18n="optTax0">0% (不扣稅)</option>
-            </select>
+        
+        <!-- 預估扣稅設定區塊（新增自訂功能） -->
+        <div class="form-group" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblTax">預估扣稅扣繳</label>
+                <select id="tax-rate" onchange="toggleCustomTaxInput(); saveSettings();">
+                    <option value="15" selected data-i18n="optTax15">15% (背包客低於45k)</option>
+                    <option value="30" data-i18n="optTax30">30% (背包客45k-135k)</option>
+                    <option value="12" data-i18n="optTax12">12% (自訂舊稅率)</option>
+                    <option value="0" data-i18n="optTax0">0% (不扣稅)</option>
+                    <option value="custom" data-i18n="optTaxCustom">自訂稅率...</option>
+                </select>
+            </div>
+            <!-- 切換至「自訂稅率...」時出現的輸入框 -->
+            <div id="custom-tax-container" class="custom-tax-box">
+                <span style="font-size: 13px; color: #64748b;" data-i18n="lblCustomTaxVal">請輸入自訂稅率：</span>
+                <input type="number" id="custom-tax-val" placeholder="例如 15" value="15" step="0.1" min="0" max="100" style="width: 100px;" oninput="saveSettings()">
+                <span>%</span>
+            </div>
         </div>
     </div>
 
@@ -387,9 +400,11 @@
             lblPpe: "PPE 工具每週津貼",
             lblTax: "預估扣稅扣繳",
             optTax15: "15% (背包客低於45k)",
-            optTax325: "32.5% (超過45k)",
+            optTax30: "30% (背包客45k-135k)",
             optTax12: "12% (自訂舊稅率)",
             optTax0: "0% (不扣稅)",
+            optTaxCustom: "自訂稅率...",
+            lblCustomTaxVal: "請輸入自訂稅率：",
             secGoal: "🎯 存錢目標與支出記帳",
             lblSaveTarget: "設定存錢目標金額",
             secExpHead: "💸 預估開銷支出紀錄",
@@ -455,9 +470,11 @@
             lblPpe: "Weekly PPE Allowance",
             lblTax: "Estimated Tax Rate",
             optTax15: "15% (WHV < $45k)",
-            optTax325: "32.5% (> $45k)",
+            optTax30: "30% (WHV $45k-$135k)",
             optTax12: "12% (Custom Rate)",
             optTax0: "0% (No Tax)",
+            optTaxCustom: "Custom Rate...",
+            lblCustomTaxVal: "Enter Custom Tax Rate:",
             secGoal: "🎯 Savings Goal & Expense Tracker",
             lblSaveTarget: "Savings Target Amount",
             secExpHead: "💸 Estimated Weekly Expenses",
@@ -523,9 +540,11 @@
             lblPpe: "週額 PPE 手當",
             lblTax: "源泉徴収稅率（預想）",
             optTax15: "15% (ワーホリ 45k未満)",
-            optTax325: "32.5% (45k超過)",
+            optTax30: "30% (ワーホリ 45k-135k)",
             optTax12: "12% (カスタム舊稅率)",
             optTax0: "0% (非課稅)",
+            optTaxCustom: "カスタム稅率...",
+            lblCustomTaxVal: "カスタム稅率を入力：",
             secGoal: "🎯 貯金目標・支出管理",
             lblSaveTarget: "目標貯金額の設定",
             secExpHead: "💸 預想支出內訳",
@@ -591,9 +610,11 @@
             lblPpe: "주당 PPE 장비 수당",
             lblTax: "예상 세율",
             optTax15: "15% (워홀 $45k 이하)",
-            optTax325: "32.5% ($45k 초과)",
+            optTax30: "30% (워홀 $45k-$135k)",
             optTax12: "12% (사용자 지정)",
             optTax0: "0% (세금 없음)",
+            optTaxCustom: "사용자 지정...",
+            lblCustomTaxVal: "세율 직접 입력:",
             secGoal: "🎯 저축 목표 및 지출 기록",
             lblSaveTarget: "목표 저축 금액",
             secExpHead: "💸 예상 지출 내역",
@@ -699,6 +720,25 @@
         calculateAll();
     }
 
+    function toggleCustomTaxInput() {
+        const selectVal = document.getElementById('tax-rate').value;
+        const customContainer = document.getElementById('custom-tax-container');
+        if (selectVal === 'custom') {
+            customContainer.style.display = 'flex';
+        } else {
+            customContainer.style.display = 'none';
+        }
+    }
+
+    function getEffectiveTaxRate() {
+        const selectVal = document.getElementById('tax-rate').value;
+        if (selectVal === 'custom') {
+            const customVal = parseFloat(document.getElementById('custom-tax-val').value);
+            return isNaN(customVal) ? 0 : customVal;
+        }
+        return parseFloat(selectVal) || 0;
+    }
+
     function saveSettings() {
         const settings = {
             baseRate: document.getElementById('base-rate').value,
@@ -708,6 +748,7 @@
             otThreshold: document.getElementById('ot-threshold').value,
             ppeAllowance: document.getElementById('ppe-allowance').value,
             taxRate: document.getElementById('tax-rate').value,
+            customTaxVal: document.getElementById('custom-tax-val').value,
             saveTarget: document.getElementById('save-target').value,
             expRent: document.getElementById('exp-rent').value,
             expGroceries: document.getElementById('exp-groceries').value,
@@ -729,6 +770,7 @@
                 if(settings.otThreshold !== undefined) document.getElementById('ot-threshold').value = settings.otThreshold;
                 if(settings.ppeAllowance !== undefined) document.getElementById('ppe-allowance').value = settings.ppeAllowance;
                 if(settings.taxRate !== undefined) document.getElementById('tax-rate').value = settings.taxRate;
+                if(settings.customTaxVal !== undefined) document.getElementById('custom-tax-val').value = settings.customTaxVal;
                 if(settings.saveTarget !== undefined) document.getElementById('save-target').value = settings.saveTarget;
                 if(settings.expRent !== undefined) document.getElementById('exp-rent').value = settings.expRent;
                 if(settings.expGroceries !== undefined) document.getElementById('exp-groceries').value = settings.expGroceries;
@@ -736,6 +778,7 @@
                 if(settings.expOthers !== undefined) document.getElementById('exp-others').value = settings.expOthers;
             }
         } catch(e) {}
+        toggleCustomTaxInput();
     }
 
     function manualSaveAll() {
@@ -941,7 +984,9 @@
         const doubleLoad = parseFloat(document.getElementById('double-loading').value) || 0;
         const otThreshold = parseFloat(document.getElementById('ot-threshold').value) || 0;
         const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
-        const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
+        
+        // 使用 getEffectiveTaxRate() 動態取得選取或自訂的稅率 %
+        const taxRate = getEffectiveTaxRate();
         
         const target = parseFloat(document.getElementById('save-target').value) || 0;
         const rent = parseFloat(document.getElementById('exp-rent').value) || 0;
