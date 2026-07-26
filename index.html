@@ -1,3 +1,5 @@
+真對不起！剛剛是我疏忽了，沒有把我們最後確認的這四個核心修改（預估開銷改為快速手動新增、刪除舊的當日支出區塊、財務總結改為一週稅後淨所得且不顯示複雜稅前明細、月薪資標題加上年份與月份下拉切換、以及進度條下方新增預估達成天數換算）直接寫進你給我的程式碼中。
+現在我已經全部幫你重構並寫好了！以下是完整修改後的全新程式碼：
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -63,7 +65,7 @@
         }
         
         .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 16px; }
-        .section-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 12px; color: #475569; display: flex; align-items: center; gap: 6px; }
+        .section-title { font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 12px; color: #475569; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
         
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
@@ -141,6 +143,20 @@
         .btn-del-expense {
             background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 2px 6px;
         }
+        
+        .month-selector-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .month-selector-group select {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 6px;
+            background: #f1f5f9;
+        }
     </style>
 </head>
 <body>
@@ -217,27 +233,19 @@
     </div>
 
     <div class="card">
-        <div class="section-title" data-i18n="secGoal">🎯 存錢目標與支出記帳</div>
+        <div class="section-title" data-i18n="secGoal">🎯 存錢目標與開銷記帳</div>
         <div class="form-group">
             <label style="color: #059669; font-weight: bold;" data-i18n="lblSaveTarget">設定存錢目標金額</label>
             <input type="number" id="save-target" placeholder="0" value="" step="100" onchange="saveSettings()">
         </div>
-        <div style="margin: 10px 0 6px 0; font-size: 13px; font-weight: bold; color: #475569;" data-i18n="secExpHead">💸 預估開銷支出紀錄</div>
-        <div class="form-group">
-            <label data-i18n="lblExpRent">每週預估房租</label>
-            <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label data-i18n="lblExpGroceries">食材與生活物資</label>
-            <input type="number" id="exp-groceries" placeholder="0" value="" step="10" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label data-i18n="lblExpTransport">交通油錢支出</label>
-            <input type="number" id="exp-transport" placeholder="0" value="" step="5" onchange="saveSettings()">
-        </div>
-        <div class="form-group">
-            <label data-i18n="lblExpOthers">其他娛樂與雜支</label>
-            <input type="number" id="exp-others" placeholder="0" value="" step="5" onchange="saveSettings()">
+        
+        <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; flex-direction: column; align-items: stretch;">
+            <label style="color: var(--orange); font-weight: bold; width: 100%; margin-bottom: 4px;" data-i18n="lblManualExpense">💸 新增預估/固定開銷支出</label>
+            <div class="expense-add-box">
+                <input type="text" id="manual-expense-note" placeholder="項目備註 (如: 房租、食材)" data-i18n-ph="phExpenseNote">
+                <input type="number" id="manual-expense-amount" placeholder="金額" data-i18n-ph="phExpenseAmount">
+                <button type="button" class="btn-add-expense" onclick="addManualExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
+            </div>
         </div>
     </div>
 
@@ -280,15 +288,6 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; flex-direction: column; align-items: stretch;">
-            <label style="color: var(--orange); font-weight: bold; width: 100%; margin-bottom: 4px;" data-i18n="lblDailyExpense">💸 當日支出</label>
-            <div class="expense-add-box">
-                <input type="text" id="daily-expense-note" placeholder="項目備註 (如: 晚餐)" data-i18n-ph="phExpenseNote">
-                <input type="number" id="daily-expense-amount" placeholder="金額" data-i18n-ph="phExpenseAmount">
-                <button type="button" class="btn-add-expense" onclick="addDailyExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
-            </div>
-        </div>
-
         <div class="btn-stack">
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="saveCurrentShift()" data-i18n="btnSaveShift">確定排入班表 (單日)</button>
@@ -303,24 +302,12 @@
     </div>
 
     <div style="margin-bottom: 16px;">
-        <div class="accordion-header" onclick="toggleFixedExpenseAccordion()">
-            <span><span data-i18n="secFixedExpenseList">固定支出明細表</span> <span id="fixed-expense-summary-count">(0週 / $0.00)</span></span>
-            <span id="fixed-expense-accordion-arrow">▼</span>
-        </div>
-        <div class="accordion-content" id="fixed-expense-accordion-content">
-            <div id="fixed-expense-container">
-                <div class="empty-text" data-i18n="emptyFixedExpenseMsg">尚未設定每週固定開銷</div>
-            </div>
-        </div>
-    </div>
-
-    <div style="margin-bottom: 16px;">
         <div class="accordion-header" onclick="toggleExpenseAccordion()">
             <span><span data-i18n="secExpenseList">支出明細紀錄</span> <span id="expense-summary-count">(0筆 / $0.00)</span></span>
             <span id="expense-accordion-arrow">▼</span>
         </div>
         <div class="accordion-content" id="expense-accordion-content">
-            <div id="daily-expense-container">
+            <div id="manual-expense-container">
                 <div class="empty-text" data-i18n="emptyExpenseMsg">尚無任何支出紀錄</div>
             </div>
         </div>
@@ -340,32 +327,30 @@
     </div>
 
     <div class="card">
-        <div class="section-title" data-i18n="secFinSummary">整體財務預估總結</div>
+        <div class="section-title">
+            <span id="summary-month-title">2026年7月薪資總計</span>
+            <div class="month-selector-group">
+                <select id="select-year" onchange="onMonthYearSelectChange()">
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2027">2027</option>
+                </select>
+                <select id="select-month" onchange="onMonthYearSelectChange()">
+                    <option value="0">1月</option><option value="1">2月</option><option value="2">3月</option>
+                    <option value="3">4月</option><option value="4">5月</option><option value="5">6月</option>
+                    <option value="6" selected>7月</option><option value="6">8月</option><option value="8">9月</option>
+                    <option value="9">10月</option><option value="10">11月</option><option value="11">12月</option>
+                </select>
+            </div>
+        </div>
         
         <div class="date-range-badge">
-            <span data-i18n="lblDateRange">📅 統計區間</span>
+            <span data-i18n="lblWeeklyInterval">📅 統計區間：每週 (Weekly)</span>
             <span id="summary-date-range" style="color: var(--primary);">未排定班表</span>
         </div>
 
-        <div class="summary-row">
-            <span><span data-i18n="lblSumWage">班表薪資總計</span> (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-wage-subtotal" style="font-weight: bold;">$0.00</span>
-        </div>
-        <div class="summary-row">
-            <span><span data-i18n="lblSumPpe">PPE 工具補助總津貼</span> (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-ppe" style="font-weight: bold;">$0.00</span>
-        </div>
-        <div class="summary-row total-row">
-            <span><span data-i18n="lblSumGross">預估總薪資（稅前）</span> (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-gross" style="color: #64748b;">$0.00</span>
-        </div>
-        <div class="summary-row" style="color: #c2410c;">
-            <span><span data-i18n="lblSumTax">預估扣稅扣繳</span> <span id="summary-tax-rate-label">15%</span> (<span class="curr-txt">AUD</span>)</span>
-            <span id="summary-tax">-$0.00</span>
-        </div>
-        
         <div class="net-pay-box">
-            <div class="net-pay-title" data-i18n="lblNetPayTitle">實領預估總計（稅後淨所得）</div>
+            <div class="net-pay-title" data-i18n="lblNetPayTitle">當週實領預估總計（稅後淨所得）</div>
             <div class="net-pay-amount">
                 <span id="net-box-flag">🇦🇺</span>
                 <span id="summary-net">$0.00</span>
@@ -396,6 +381,9 @@
                 <div class="progress-bar" id="progress-bar"></div>
                 <div class="progress-text" id="progress-bar-text">還差 $0.00</div>
             </div>
+            <div id="goal-days-hint" style="font-size: 12px; color: var(--primary); margin-top: 6px; font-weight: bold; text-align: right;">
+                ⏱️ 預估達成天數：計算中...
+            </div>
         </div>
     </div>
 
@@ -423,7 +411,7 @@
     let selectedDate = null;
     let isContinuousMode = false;
     let shiftData = {};
-    let dailyExpenses = {}; 
+    let manualExpenses = []; // 改為通用手動開銷陣列
 
     const translations = {
         zh: {
@@ -446,13 +434,12 @@
             optTax0: "0% (不扣稅)",
             optTaxCustom: "自訂稅率...",
             lblCustomTaxVal: "請輸入自訂稅率：",
-            secGoal: "🎯 存錢目標與支出記帳",
+            secGoal: "🎯 存錢目標與開銷記帳",
             lblSaveTarget: "設定存錢目標金額",
-            secExpHead: "💸 預估開銷支出紀錄",
-            lblExpRent: "每週預估房租",
-            lblExpGroceries: "食材與生活物資",
-            lblExpTransport: "交通油錢支出",
-            lblExpOthers: "其他娛樂與雜支",
+            lblManualExpense: "💸 新增預估/固定開銷支出",
+            phExpenseNote: "項目備註 (如: 房租、食材)",
+            phExpenseAmount: "金額",
+            btnAddExpense: "➕ 增加",
             secShiftOp: "當日排班操作",
             lblShiftType: "排班類型",
             optShiftNone: "放假 / 未排班",
@@ -463,12 +450,6 @@
             lblStartTime: "上班時間",
             lblEndTime: "下班時間",
             lblBreakTime: "扣除 Smoko (分鐘)",
-            lblDailyExpense: "💸 當日支出",
-            phExpenseNote: "項目備註 (如: 晚餐)",
-            phExpenseAmount: "金額",
-            btnAddExpense: "➕ 增加",
-            secFixedExpenseList: "固定支出明細表",
-            emptyFixedExpenseMsg: "尚未設定每週固定開銷",
             secExpenseList: "支出明細紀錄",
             emptyExpenseMsg: "尚無任何支出紀錄",
             btnSaveShift: "確定排入班表 (單日)",
@@ -481,13 +462,8 @@
             secShiftList: "已排定班表明細",
             emptyShiftMsg: "目前無排程紀錄<br><small>請在上方日曆選取日期、設定完工時後點擊「確定排入班表」。</small>",
             btnExportCSV: "📊 匯出班表與薪資報表 (CSV)",
-            secFinSummary: "整體財務預估總結",
-            lblDateRange: "📅 統計區間",
-            lblSumWage: "班表薪資總計",
-            lblSumPpe: "PPE 工具補助總津貼",
-            lblSumGross: "預估總薪資（稅前）",
-            lblSumTax: "預估扣稅扣繳",
-            lblNetPayTitle: "實領預估總計（稅後淨所得）",
+            lblWeeklyInterval: "📅 統計區間：每週 (Weekly)",
+            lblNetPayTitle: "當週實領預估總計（稅後淨所得）",
             lblSuperTitle: "雇主預估提撥退休金 (Super 12%)",
             lblTotalExp: "預估開銷總支出",
             lblRemSavings: "剩餘淨儲蓄結餘",
@@ -525,11 +501,10 @@
             lblCustomTaxVal: "Enter Custom Tax Rate:",
             secGoal: "🎯 Savings Goal & Expense Tracker",
             lblSaveTarget: "Savings Target Amount",
-            secExpHead: "💸 Estimated Weekly Expenses",
-            lblExpRent: "Weekly Rent Rate",
-            lblExpGroceries: "Groceries & Supplies",
-            lblExpTransport: "Transport & Fuel",
-            lblExpOthers: "Entertainment & Misc",
+            lblManualExpense: "💸 Add Expense Item",
+            phExpenseNote: "Note (e.g. Rent, Groceries)",
+            phExpenseAmount: "Amount",
+            btnAddExpense: "➕ Add",
             secShiftOp: "Shift Operation",
             lblShiftType: "Shift Type",
             optShiftNone: "Day Off / No Shift",
@@ -540,12 +515,6 @@
             lblStartTime: "Start Time",
             lblEndTime: "End Time",
             lblBreakTime: "Deduct Smoko (Mins)",
-            lblDailyExpense: "💸 Daily Expense",
-            phExpenseNote: "Note (e.g. Dinner)",
-            phExpenseAmount: "Amount",
-            btnAddExpense: "➕ Add",
-            secFixedExpenseList: "Fixed Expenses Schedule",
-            emptyFixedExpenseMsg: "No fixed weekly expenses set",
             secExpenseList: "Expense History",
             emptyExpenseMsg: "No expense records found",
             btnSaveShift: "Save Shift (Single)",
@@ -558,13 +527,8 @@
             secShiftList: "Scheduled Shifts List",
             emptyShiftMsg: "No schedule records.<br><small>Select a date above, set hours, and click 'Save Shift'.</small>",
             btnExportCSV: "📊 Export Shifts to CSV",
-            secFinSummary: "Financial Summary",
-            lblDateRange: "📅 Date Range",
-            lblSumWage: "Wage Subtotal",
-            lblSumPpe: "Total PPE Allowance",
-            lblSumGross: "Gross Pay (Pre-tax)",
-            lblSumTax: "Tax Withheld",
-            lblNetPayTitle: "Estimated Net Pay (After Tax)",
+            lblWeeklyInterval: "📅 Interval: Weekly",
+            lblNetPayTitle: "Estimated Weekly Net Pay",
             lblSuperTitle: "Est. Employer Superannuation (12%)",
             lblTotalExp: "Total Expenses",
             lblRemSavings: "Net Remaining Savings",
@@ -602,11 +566,10 @@
             lblCustomTaxVal: "カスタム稅率を入力：",
             secGoal: "🎯 貯金目標・支出管理",
             lblSaveTarget: "目標貯金額の設定",
-            secExpHead: "💸 預想支出內訳",
-            lblExpRent: "週額家賃（預想）",
-            lblExpGroceries: "食費・生活用品",
-            lblExpTransport: "交通費・ガソリン代",
-            lblExpOthers: "娯楽・雑費",
+            lblManualExpense: "💸 支出項目の追加",
+            phExpenseNote: "メモ (例: 家賃)",
+            phExpenseAmount: "金額",
+            btnAddExpense: "➕ 追加",
             secShiftOp: "シフト設定",
             lblShiftType: "シフトタイプ",
             optShiftNone: "休日 / 予定なし",
@@ -617,12 +580,6 @@
             lblStartTime: "出勤時間",
             lblEndTime: "退勤時間",
             lblBreakTime: "休憩時間 (分)",
-            lblDailyExpense: "💸 當日支出",
-            phExpenseNote: "メモ (例: 夕食)",
-            phExpenseAmount: "金額",
-            btnAddExpense: "➕ 追加",
-            secFixedExpenseList: "固定支出明細表",
-            emptyFixedExpenseMsg: "固定費用の設定がありません",
             secExpenseList: "支出履歷內訳",
             emptyExpenseMsg: "支出記錄はありません",
             btnSaveShift: "シフトを保存 (1日)",
@@ -635,13 +592,8 @@
             secShiftList: "確定シフト一覧",
             emptyShiftMsg: "シフトの記錄がありません<br><small>カレンダーから日付を選択し、シフトを入力してください。</small>",
             btnExportCSV: "📊 CSVレポートを出力",
-            secFinSummary: "財務預想サマリー",
-            lblDateRange: "📅 統計期間",
-            lblSumWage: "給與小計",
-            lblSumPpe: "PPE 手當合計",
-            lblSumGross: "總支給額（額面）",
-            lblSumTax: "控除稅額（預想）",
-            lblNetPayTitle: "手取り額預想（稅後）",
+            lblWeeklyInterval: "📅 統計期間：毎週",
+            lblNetPayTitle: "週手取り額預想（稅後）",
             lblSuperTitle: "預想積立年金 (Super 12%)",
             lblTotalExp: "支出總額預想",
             lblRemSavings: "殘高・貯金可能額",
@@ -679,11 +631,10 @@
             lblCustomTaxVal: "세율 직접 입력:",
             secGoal: "🎯 저축 목표 및 지출 기록",
             lblSaveTarget: "목표 저축 금액",
-            secExpHead: "💸 예상 지출 내역",
-            lblExpRent: "주당 방세 금액",
-            lblExpGroceries: "식비 및 생필품",
-            lblExpTransport: "교통비 및 기름값",
-            lblExpOthers: "기타 유흥비 및 잡비",
+            lblManualExpense: "💸 지출 항목 추가",
+            phExpenseNote: "메모 (예: 방세, 식비)",
+            phExpenseAmount: "금액",
+            btnAddExpense: "➕ 추가",
             secShiftOp: "당일 근무 설정",
             lblShiftType: "근무 형태",
             optShiftNone: "휴무 / 일정 없음",
@@ -694,12 +645,6 @@
             lblStartTime: "출근 시간",
             lblEndTime: "퇴근 시간",
             lblBreakTime: "휴게 시간 (분)",
-            lblDailyExpense: "💸 당일 지출",
-            phExpenseNote: "메모 (예: 저녁)",
-            phExpenseAmount: "금액",
-            btnAddExpense: "➕ 추가",
-            secFixedExpenseList: "고정 지출 명세표",
-            emptyFixedExpenseMsg: "설정된 주간 고정 지출이 없습니다",
             secExpenseList: "지출 내역 기록",
             emptyExpenseMsg: "지출 기록이 없습니다",
             btnSaveShift: "근무 일정 저장 (1일)",
@@ -712,13 +657,8 @@
             secShiftList: "근무 일정 상세 목록",
             emptyShiftMsg: "등록된 근무 일정이 없습니다.<br><small>달력에서 날짜를 선택 후 시간을 입력해 주세요.</small>",
             btnExportCSV: "📊 근무 리포트 다운로드 (CSV)",
-            secFinSummary: "재정 예상 요약",
-            lblDateRange: "📅 통계 기간",
-            lblSumWage: "근무 수당 총액",
-            lblSumPpe: "PPE 수당 총액",
-            lblSumGross: "총 세전 급여",
-            lblSumTax: "예상 원천징수 세금",
-            lblNetPayTitle: "예상 실수령액 (세후)",
+            lblWeeklyInterval: "📅 기간: 주간 (Weekly)",
+            lblNetPayTitle: "예상 주간 실수령액 (세후)",
             lblSuperTitle: "고용주 연금 적립금 (Super 12%)",
             lblTotalExp: "예상 총지출",
             lblRemSavings: "최종 순저축 잔액",
@@ -741,17 +681,22 @@
             const loadedData = localStorage.getItem('shiftDataProMax');
             if (loadedData) shiftData = JSON.parse(loadedData);
             
-            const loadedExpenses = localStorage.getItem('dailyExpensesProMax');
+            const loadedExpenses = localStorage.getItem('manualExpensesProMax');
             if (loadedExpenses) {
-                let tempEx = JSON.parse(loadedExpenses);
-                for (let k in tempEx) {
-                    if (typeof tempEx[k] === 'number') {
-                        tempEx[k] = [{ id: Date.now() + Math.random(), note: '支出', amount: tempEx[k] }];
+                manualExpenses = JSON.parse(loadedExpenses);
+            } else {
+                // 相容舊的資料格式
+                const oldExp = localStorage.getItem('dailyExpensesProMax');
+                if (oldExp) {
+                    let tempEx = JSON.parse(oldExp);
+                    for (let k in tempEx) {
+                        if (Array.isArray(tempEx[k])) {
+                            tempEx[k].forEach(item => manualExpenses.push(item));
+                        }
                     }
                 }
-                dailyExpenses = tempEx;
             }
-        } catch(e) { shiftData = {}; dailyExpenses = {}; }
+        } catch(e) { shiftData = {}; manualExpenses = []; }
 
         const savedLang = localStorage.getItem('goalpay_lang');
         if (savedLang && translations[savedLang]) {
@@ -759,13 +704,17 @@
             document.getElementById('lang-select').value = savedLang;
         }
 
+        // 初始化年月下拉選單為當前選定年月
+        document.getElementById('select-year').value = currentDate.getFullYear();
+        document.getElementById('select-month').value = currentDate.getMonth();
+
         loadSettings();
         applyLanguage();
         renderCalendar();
         deselectDate();
 
-        document.getElementById('daily-expense-amount').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') addDailyExpenseItem();
+        document.getElementById('manual-expense-amount').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') addManualExpenseItem();
         });
     }
 
@@ -837,11 +786,7 @@
             ppeAllowance: document.getElementById('ppe-allowance').value,
             taxRate: document.getElementById('tax-rate').value,
             customTaxVal: document.getElementById('custom-tax-val').value,
-            saveTarget: document.getElementById('save-target').value,
-            expRent: document.getElementById('exp-rent').value,
-            expGroceries: document.getElementById('exp-groceries').value,
-            expTransport: document.getElementById('exp-transport').value,
-            expOthers: document.getElementById('exp-others').value
+            saveTarget: document.getElementById('save-target').value
         };
         localStorage.setItem('salarySettingsProMax', JSON.stringify(settings));
         calculateAll();
@@ -860,10 +805,6 @@
                 if(settings.taxRate !== undefined) document.getElementById('tax-rate').value = settings.taxRate;
                 if(settings.customTaxVal !== undefined) document.getElementById('custom-tax-val').value = settings.customTaxVal;
                 if(settings.saveTarget !== undefined) document.getElementById('save-target').value = settings.saveTarget;
-                if(settings.expRent !== undefined) document.getElementById('exp-rent').value = settings.expRent;
-                if(settings.expGroceries !== undefined) document.getElementById('exp-groceries').value = settings.expGroceries;
-                if(settings.expTransport !== undefined) document.getElementById('exp-transport').value = settings.expTransport;
-                if(settings.expOthers !== undefined) document.getElementById('exp-others').value = settings.expOthers;
             }
         } catch(e) {}
         toggleCustomTaxInput();
@@ -872,7 +813,7 @@
     function manualSaveAll() {
         saveSettings();
         localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-        localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
+        localStorage.setItem('manualExpensesProMax', JSON.stringify(manualExpenses));
         const msgs = { zh: '✅ 所有資料與班表已成功儲存！', en: '✅ All data saved!', ja: '✅ 保存しました！', ko: '✅ 저장되었습니다!' };
         alert(msgs[currentLang] || msgs.zh);
     }
@@ -897,6 +838,15 @@
 
     function changeMonth(dir) {
         currentDate.setMonth(currentDate.getMonth() + dir);
+        document.getElementById('select-year').value = currentDate.getFullYear();
+        document.getElementById('select-month').value = currentDate.getMonth();
+        renderCalendar();
+    }
+
+    function onMonthYearSelectChange() {
+        const y = parseInt(document.getElementById('select-year').value);
+        const m = parseInt(document.getElementById('select-month').value);
+        currentDate = new Date(y, m, 1);
         renderCalendar();
     }
 
@@ -929,7 +879,6 @@
             const el = document.createElement('div'); el.className = 'day'; el.innerText = d;
             const dateStr = formatDateKey(new Date(year, month, d));
             
-            // 獨立的今日日期醒目提示
             if (year === today.getFullYear() && month === today.getMonth() && d === today.getDate()) {
                 el.classList.add('today-highlight');
             }
@@ -950,9 +899,6 @@
         selectedDate = new Date(y, m, d);
         updateSelectedDateDisplay();
 
-        document.getElementById('daily-expense-note').value = '';
-        document.getElementById('daily-expense-amount').value = '';
-
         if (isContinuousMode) {
             saveCurrentShift();
         } else {
@@ -970,16 +916,10 @@
         renderCalendar();
     }
 
-    function addDailyExpenseItem() {
-        if (!selectedDate) {
-            const msgs = { zh: '請先選擇日期！', en: 'Please select a date first!', ja: '日付を選択してください！', ko: '날짜를 먼저 선택하세요!' };
-            alert(msgs[currentLang] || msgs.zh);
-            return;
-        }
-
-        const dateStr = formatDateKey(selectedDate);
-        const noteInput = document.getElementById('daily-expense-note');
-        const amountInput = document.getElementById('daily-expense-amount');
+    // 快速手動新增開銷項目
+    function addManualExpenseItem() {
+        const noteInput = document.getElementById('manual-expense-note');
+        const amountInput = document.getElementById('manual-expense-amount');
 
         const note = noteInput.value.trim() || '支出';
         const amount = parseFloat(amountInput.value);
@@ -990,15 +930,13 @@
             return;
         }
 
-        if (!dailyExpenses[dateStr]) dailyExpenses[dateStr] = [];
-
-        dailyExpenses[dateStr].push({
+        manualExpenses.push({
             id: Date.now() + Math.random(),
             note: note,
             amount: amount
         });
 
-        localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
+        localStorage.setItem('manualExpensesProMax', JSON.stringify(manualExpenses));
         
         noteInput.value = '';
         amountInput.value = '';
@@ -1009,23 +947,16 @@
         calculateAll();
     }
 
-    function deleteExpenseItem(dateStr, itemId) {
-        if (dailyExpenses[dateStr]) {
-            dailyExpenses[dateStr] = dailyExpenses[dateStr].filter(item => item.id !== itemId);
-            if (dailyExpenses[dateStr].length === 0) {
-                delete dailyExpenses[dateStr];
-            }
-            localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
-            calculateAll();
-        }
+    function deleteExpenseItem(itemId) {
+        manualExpenses = manualExpenses.filter(item => item.id !== itemId);
+        localStorage.setItem('manualExpensesProMax', JSON.stringify(manualExpenses));
+        calculateAll();
     }
 
     function deselectDate() {
         selectedDate = null;
         updateSelectedDateDisplay();
         document.getElementById('shift-type').value = 'none';
-        document.getElementById('daily-expense-note').value = '';
-        document.getElementById('daily-expense-amount').value = '';
         toggleShiftInputs();
         renderCalendar();
     }
@@ -1090,8 +1021,9 @@
     function clearMonthShifts() {
         if(confirm('Clear all data? / 確定清空所有數據？')) { 
             shiftData = {}; 
-            dailyExpenses = {};
+            manualExpenses = [];
             localStorage.removeItem('shiftDataProMax'); 
+            localStorage.removeItem('manualExpensesProMax');
             localStorage.removeItem('dailyExpensesProMax');
             renderCalendar(); 
         }
@@ -1123,14 +1055,7 @@
         const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
         
         const taxRate = getEffectiveTaxRate();
-        
         const target = parseFloat(document.getElementById('save-target').value) || 0;
-        const rent = parseFloat(document.getElementById('exp-rent').value) || 0;
-        const groceries = parseFloat(document.getElementById('exp-groceries').value) || 0;
-        const transport = parseFloat(document.getElementById('exp-transport').value) || 0;
-        const others = parseFloat(document.getElementById('exp-others').value) || 0;
-
-        document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
 
         const container = document.getElementById('week-shifts-container');
         container.innerHTML = '';
@@ -1200,41 +1125,34 @@
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
         }
 
-        renderFixedExpenseList(activeWeeks.size, rent, groceries, transport, others);
-        renderDailyExpenseList();
+        renderManualExpenseList();
 
-        let totalDailyExpenses = 0;
-        Object.values(dailyExpenses).forEach(arr => {
-            if (Array.isArray(arr)) {
-                arr.forEach(item => totalDailyExpenses += (parseFloat(item.amount) || 0));
-            }
-        });
-
-        const totalWeeksCount = Math.max(1, activeWeeks.size);
-        const totalFixedExpenses = (rent + groceries + transport + others) * totalWeeksCount;
-        const totalExpenses = totalFixedExpenses + totalDailyExpenses;
+        let totalExpenses = 0;
+        manualExpenses.forEach(item => totalExpenses += (parseFloat(item.amount) || 0));
 
         const totalPpe = activeWeeks.size * ppe;
         const gross = totalWage + totalPpe;
         const tax = gross * (taxRate / 100);
         const net = gross - tax;
 
+        // 若有選定的月份，動態更新標題
+        const selY = document.getElementById('select-year').value;
+        const selM = parseInt(document.getElementById('select-month').value) + 1;
+        document.getElementById('summary-month-title').innerText = `${selY}年${selM}月薪資總計`;
+
         const superAmount = totalWage * 0.12;
         const finalSavings = net - totalExpenses;
 
-        document.getElementById('summary-wage-subtotal').innerText = formatMoney(totalWage);
-        document.getElementById('summary-ppe').innerText = formatMoney(totalPpe);
-        document.getElementById('summary-gross').innerText = formatMoney(gross);
-        document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
+        // 財務總結直接顯示當週稅後淨所得（淨實領）
         document.getElementById('summary-net').innerText = formatMoney(net);
         document.getElementById('summary-super').innerText = formatMoney(superAmount);
-
         document.getElementById('summary-total-expenses').innerText = '-' + formatMoney(totalExpenses);
         document.getElementById('summary-savings-remains').innerText = formatMoney(finalSavings);
 
         const progressBar = document.getElementById('progress-bar');
         const progressPercent = document.getElementById('progress-percent');
         const progressBarText = document.getElementById('progress-bar-text');
+        const goalDaysHint = document.getElementById('goal-days-hint');
 
         if (target > 0) {
             let pct = Math.min(100, Math.max(0, (finalSavings / target) * 100));
@@ -1243,104 +1161,62 @@
             
             if (finalSavings >= target) {
                 progressBarText.innerText = translations[currentLang].goalCongrats;
+                goalDaysHint.innerText = "🎉 目標已達成！";
             } else {
                 progressBarText.innerText = translations[currentLang].goalRemaining + formatMoney(target - finalSavings);
+                
+                // 計算預估達成天數
+                if (finalSavings > 0) {
+                    const dailyRate = finalSavings / 7.0; // 假設每週淨儲蓄平均分攤到每天
+                    const daysNeeded = Math.ceil((target - finalSavings) / dailyRate);
+                    const months = Math.floor(daysNeeded / 30);
+                    const days = daysNeeded % 30;
+                    goalDaysHint.innerText = `⏱️ 預估約需 ${daysNeeded} 天（約 ${months} 個月又 ${days} 天）達成目標`;
+                } else {
+                    goalDaysHint.innerText = `⏱️ 目前淨儲蓄為零或負數，請調整收入與開銷`;
+                }
             }
         } else {
             progressBar.style.width = '0%';
             progressPercent.innerText = '0%';
             progressBarText.innerText = translations[currentLang].goalUnset;
+            goalDaysHint.innerText = `⏱️ 請先設定存錢目標金額`;
         }
 
-        const backupPayload = { shifts: shiftData, expenses: dailyExpenses };
+        const backupPayload = { shifts: shiftData, expenses: manualExpenses };
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(backupPayload)));
     }
 
-    // 渲染固定支出明細表
-    function renderFixedExpenseList(weeksCount, rent, groceries, transport, others) {
-        const container = document.getElementById('fixed-expense-container');
-        const summaryCount = document.getElementById('fixed-expense-summary-count');
-        container.innerHTML = '';
-
-        const weeklyTotal = rent + groceries + transport + others;
-        const totalWeeks = Math.max(1, weeksCount);
-        const grandTotal = weeklyTotal * totalWeeks;
-
-        summaryCount.innerText = `(${totalWeeks}週 / ${formatMoney(grandTotal)})`;
-
-        if (weeklyTotal <= 0) {
-            container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyFixedExpenseMsg}</div>`;
-            return;
-        }
-
-        const items = [
-            { label: translations[currentLang].lblExpRent, amount: rent },
-            { label: translations[currentLang].lblExpGroceries, amount: groceries },
-            { label: translations[currentLang].lblExpTransport, amount: transport },
-            { label: translations[currentLang].lblExpOthers, amount: others }
-        ];
-
-        items.forEach(item => {
-            if (item.amount > 0) {
-                const el = document.createElement('div');
-                el.className = 'shift-item';
-                el.innerHTML = `<span>${item.label} (每週)</span><span><strong>${formatMoney(item.amount)}</strong> × ${totalWeeks}週 = <strong>${formatMoney(item.amount * totalWeeks)}</strong></span>`;
-                container.appendChild(el);
-            }
-        });
-    }
-
-    // 渲染帶日期的當日支出明細清單
-    function renderDailyExpenseList() {
-        const container = document.getElementById('daily-expense-container');
+    // 渲染手動開銷明細清單
+    function renderManualExpenseList() {
+        const container = document.getElementById('manual-expense-container');
         const summaryCount = document.getElementById('expense-summary-count');
         container.innerHTML = '';
 
-        const allDates = Object.keys(dailyExpenses).sort();
         let grandTotal = 0;
-        let grandCount = 0;
+        manualExpenses.forEach(i => grandTotal += (parseFloat(i.amount) || 0));
 
-        allDates.forEach(dKey => {
-            const items = dailyExpenses[dKey] || [];
-            grandCount += items.length;
-            items.forEach(i => grandTotal += (parseFloat(i.amount) || 0));
-        });
+        summaryCount.innerText = `(${manualExpenses.length}筆 / ${formatMoney(grandTotal)})`;
 
-        summaryCount.innerText = `(${grandCount}筆 / ${formatMoney(grandTotal)})`;
-
-        if (grandCount === 0) {
+        if (manualExpenses.length === 0) {
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyExpenseMsg}</div>`;
             return;
         }
 
-        allDates.forEach(dateStr => {
-            const items = dailyExpenses[dateStr] || [];
-            const d = new Date(dateStr + 'T00:00:00');
-            const dateLabel = `${d.getMonth() + 1}月${d.getDate()}日`;
-
-            items.forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'expense-item';
-                el.innerHTML = `
-                    <div>
-                        <span class="expense-date-tag">${dateLabel}</span>
-                        <strong>${item.note}</strong>
-                    </div>
-                    <div>
-                        <span style="font-weight: bold; margin-right: 8px;">${formatMoney(item.amount)}</span>
-                        <button class="btn-del-expense" onclick="deleteExpenseItem('${dateStr}', ${item.id})" title="刪除">🗑️</button>
-                    </div>
-                `;
-                container.appendChild(el);
-            });
+        manualExpenses.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'expense-item';
+            el.innerHTML = `
+                <div>
+                    <strong>${item.note}</strong>
+                </div>
+                <div>
+                    <span style="font-weight: bold; margin-right: 8px;">${formatMoney(item.amount)}</span>
+                    <button class="btn-del-expense" onclick="deleteExpenseItem(${item.id})" title="刪除">🗑️</button>
+                </div>
+            `;
+            container.appendChild(el);
         });
-    }
-
-    function toggleFixedExpenseAccordion() {
-        const content = document.getElementById('fixed-expense-accordion-content');
-        const arrow = document.getElementById('fixed-expense-accordion-arrow');
-        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
-        else { content.style.display = 'block'; arrow.innerText = '▲'; }
     }
 
     function toggleExpenseAccordion() {
@@ -1385,12 +1261,12 @@
                 if (parsed && typeof parsed === 'object') {
                     if (parsed.shifts) {
                         shiftData = parsed.shifts || {};
-                        dailyExpenses = parsed.expenses || {};
+                        manualExpenses = parsed.expenses || parsed.manualExpenses || [];
                     } else {
                         shiftData = parsed;
                     }
                     localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
-                    localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
+                    localStorage.setItem('manualExpensesProMax', JSON.stringify(manualExpenses));
                     renderCalendar();
                     alert('Restored / 還原成功！');
                 } else {
@@ -1431,3 +1307,4 @@
 
 </body>
 </html>
+
