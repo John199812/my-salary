@@ -70,7 +70,9 @@
         .weekday { font-size: 12px; font-weight: bold; color: #94a3b8; padding: 4px 0; }
         .day { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; border-radius: 8px; cursor: pointer; position: relative; font-weight: 500; user-select: none; }
         .day:hover { background: #f1f5f9; }
-        .day.selected { background: var(--primary) !important; color: white; }
+        .day.selected { background: var(--primary) !important; color: white !important; }
+        .day.today-highlight { border: 2px solid var(--orange); font-weight: bold; color: var(--orange); }
+        .day.selected.today-highlight { border: 2px solid white; color: white; }
         .day.has-shift::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: var(--orange); border-radius: 50%; }
         .day.selected.has-shift::after { background: white; }
         .day.other-month { color: #cbd5e1; }
@@ -121,7 +123,6 @@
             display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* 完美修復溢出的支出輸入列 */
         .expense-add-box { display: flex; gap: 6px; width: 100%; margin-top: 6px; align-items: center; }
         .expense-add-box input[type="text"] { flex: 1.2; min-width: 0; text-align: left; }
         .expense-add-box input[type="number"] { flex: 0.8; min-width: 0; text-align: right; }
@@ -165,7 +166,6 @@
         </div>
     </div>
 
-    <!-- 1. 基礎設定 -->
     <div class="card">
         <div class="section-title" data-i18n="secSalary">薪資與津貼設定</div>
         <div class="form-group">
@@ -197,7 +197,6 @@
             <input type="number" id="ppe-allowance" placeholder="0" value="" step="0.5" onchange="saveSettings()">
         </div>
         
-        <!-- 預估扣稅設定區塊 -->
         <div class="form-group" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <label data-i18n="lblTax">預估扣稅扣繳</label>
@@ -217,7 +216,6 @@
         </div>
     </div>
 
-    <!-- 存錢目標與支出記帳 -->
     <div class="card">
         <div class="section-title" data-i18n="secGoal">🎯 存錢目標與支出記帳</div>
         <div class="form-group">
@@ -243,7 +241,6 @@
         </div>
     </div>
 
-    <!-- 2. 日曆 -->
     <div class="card">
         <div id="continuous-notice" class="continuous-notice" data-i18n="msgContinuousActive">
             ⚡ 連續新增模式開啟中：點擊日曆日期即可直接套用排班設定！
@@ -256,7 +253,6 @@
         <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
-    <!-- 3. 排班與當日支出操作 -->
     <div class="card">
         <div class="section-title"><span data-i18n="secShiftOp">當日排班操作</span> (<span id="selected-date-str">未選擇日期</span>)</div>
         <div class="form-group">
@@ -284,7 +280,6 @@
             </div>
         </div>
 
-        <!-- 當日支出輸入區 -->
         <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; flex-direction: column; align-items: stretch;">
             <label style="color: var(--orange); font-weight: bold; width: 100%; margin-bottom: 4px;" data-i18n="lblDailyExpense">💸 當日支出</label>
             <div class="expense-add-box">
@@ -307,7 +302,18 @@
         </div>
     </div>
 
-    <!-- 4.1 支出明細列表 (帶日期) -->
+    <div style="margin-bottom: 16px;">
+        <div class="accordion-header" onclick="toggleFixedExpenseAccordion()">
+            <span><span data-i18n="secFixedExpenseList">固定支出明細表</span> <span id="fixed-expense-summary-count">(0週 / $0.00)</span></span>
+            <span id="fixed-expense-accordion-arrow">▼</span>
+        </div>
+        <div class="accordion-content" id="fixed-expense-accordion-content">
+            <div id="fixed-expense-container">
+                <div class="empty-text" data-i18n="emptyFixedExpenseMsg">尚未設定每週固定開銷</div>
+            </div>
+        </div>
+    </div>
+
     <div style="margin-bottom: 16px;">
         <div class="accordion-header" onclick="toggleExpenseAccordion()">
             <span><span data-i18n="secExpenseList">支出明細紀錄</span> <span id="expense-summary-count">(0筆 / $0.00)</span></span>
@@ -320,7 +326,6 @@
         </div>
     </div>
 
-    <!-- 4. 排定班表明細 -->
     <div style="margin-bottom: 16px;">
         <div class="accordion-header" onclick="toggleShiftAccordion()">
             <span><span data-i18n="secShiftList">已排定班表明細</span> <span id="shift-summary-count">(0天 / 0hrs)</span></span>
@@ -334,7 +339,6 @@
         </div>
     </div>
 
-    <!-- 5. 整體財務預估總結 -->
     <div class="card">
         <div class="section-title" data-i18n="secFinSummary">整體財務預估總結</div>
         
@@ -395,7 +399,6 @@
         </div>
     </div>
 
-    <!-- 6. 資料備份與傳輸管理 -->
     <div style="margin-bottom: 20px;">
         <div class="accordion-header" onclick="toggleAccordion()">
             <span data-i18n="secBackup">資料備份與傳輸管理</span>
@@ -464,6 +467,8 @@
             phExpenseNote: "項目備註 (如: 晚餐)",
             phExpenseAmount: "金額",
             btnAddExpense: "➕ 增加",
+            secFixedExpenseList: "固定支出明細表",
+            emptyFixedExpenseMsg: "尚未設定每週固定開銷",
             secExpenseList: "支出明細紀錄",
             emptyExpenseMsg: "尚無任何支出紀錄",
             btnSaveShift: "確定排入班表 (單日)",
@@ -539,6 +544,8 @@
             phExpenseNote: "Note (e.g. Dinner)",
             phExpenseAmount: "Amount",
             btnAddExpense: "➕ Add",
+            secFixedExpenseList: "Fixed Expenses Schedule",
+            emptyFixedExpenseMsg: "No fixed weekly expenses set",
             secExpenseList: "Expense History",
             emptyExpenseMsg: "No expense records found",
             btnSaveShift: "Save Shift (Single)",
@@ -614,6 +621,8 @@
             phExpenseNote: "メモ (例: 夕食)",
             phExpenseAmount: "金額",
             btnAddExpense: "➕ 追加",
+            secFixedExpenseList: "固定支出明細表",
+            emptyFixedExpenseMsg: "固定費用の設定がありません",
             secExpenseList: "支出履歷內訳",
             emptyExpenseMsg: "支出記錄はありません",
             btnSaveShift: "シフトを保存 (1日)",
@@ -689,6 +698,8 @@
             phExpenseNote: "메모 (예: 저녁)",
             phExpenseAmount: "금액",
             btnAddExpense: "➕ 추가",
+            secFixedExpenseList: "고정 지출 명세표",
+            emptyFixedExpenseMsg: "설정된 주간 고정 지출이 없습니다",
             secExpenseList: "지출 내역 기록",
             emptyExpenseMsg: "지출 기록이 없습니다",
             btnSaveShift: "근무 일정 저장 (1일)",
@@ -908,6 +919,7 @@
 
         const firstDayIndex = new Date(year, month, 1).getDay();
         const totalDays = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
 
         for(let i=0; i<firstDayIndex; i++) {
             const el = document.createElement('div'); el.className = 'day other-month'; grid.appendChild(el);
@@ -916,6 +928,12 @@
         for(let d=1; d<=totalDays; d++) {
             const el = document.createElement('div'); el.className = 'day'; el.innerText = d;
             const dateStr = formatDateKey(new Date(year, month, d));
+            
+            // 獨立的今日日期醒目提示
+            if (year === today.getFullYear() && month === today.getMonth() && d === today.getDate()) {
+                el.classList.add('today-highlight');
+            }
+
             if (shiftData[dateStr] && shiftData[dateStr].type !== 'none') el.classList.add('has-shift');
             if (selectedDate && selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d) el.classList.add('selected');
             el.onclick = () => selectDate(year, month, d);
@@ -1182,6 +1200,7 @@
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
         }
 
+        renderFixedExpenseList(activeWeeks.size, rent, groceries, transport, others);
         renderDailyExpenseList();
 
         let totalDailyExpenses = 0;
@@ -1237,7 +1256,41 @@
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(backupPayload)));
     }
 
-    // 渲染帶日期的全域/當日支出明細清單
+    // 渲染固定支出明細表
+    function renderFixedExpenseList(weeksCount, rent, groceries, transport, others) {
+        const container = document.getElementById('fixed-expense-container');
+        const summaryCount = document.getElementById('fixed-expense-summary-count');
+        container.innerHTML = '';
+
+        const weeklyTotal = rent + groceries + transport + others;
+        const totalWeeks = Math.max(1, weeksCount);
+        const grandTotal = weeklyTotal * totalWeeks;
+
+        summaryCount.innerText = `(${totalWeeks}週 / ${formatMoney(grandTotal)})`;
+
+        if (weeklyTotal <= 0) {
+            container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyFixedExpenseMsg}</div>`;
+            return;
+        }
+
+        const items = [
+            { label: translations[currentLang].lblExpRent, amount: rent },
+            { label: translations[currentLang].lblExpGroceries, amount: groceries },
+            { label: translations[currentLang].lblExpTransport, amount: transport },
+            { label: translations[currentLang].lblExpOthers, amount: others }
+        ];
+
+        items.forEach(item => {
+            if (item.amount > 0) {
+                const el = document.createElement('div');
+                el.className = 'shift-item';
+                el.innerHTML = `<span>${item.label} (每週)</span><span><strong>${formatMoney(item.amount)}</strong> × ${totalWeeks}週 = <strong>${formatMoney(item.amount * totalWeeks)}</strong></span>`;
+                container.appendChild(el);
+            }
+        });
+    }
+
+    // 渲染帶日期的當日支出明細清單
     function renderDailyExpenseList() {
         const container = document.getElementById('daily-expense-container');
         const summaryCount = document.getElementById('expense-summary-count');
@@ -1281,6 +1334,13 @@
                 container.appendChild(el);
             });
         });
+    }
+
+    function toggleFixedExpenseAccordion() {
+        const content = document.getElementById('fixed-expense-accordion-content');
+        const arrow = document.getElementById('fixed-expense-accordion-arrow');
+        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
+        else { content.style.display = 'block'; arrow.innerText = '▲'; }
     }
 
     function toggleExpenseAccordion() {
