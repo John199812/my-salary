@@ -223,21 +223,42 @@
             <input type="number" id="save-target" placeholder="0" value="" step="100" onchange="saveSettings()">
         </div>
         <div style="margin: 10px 0 6px 0; font-size: 13px; font-weight: bold; color: #475569;" data-i18n="secExpHead">💸 預估開銷支出紀錄</div>
-        <div class="form-group">
-            <label data-i18n="lblExpRent">每週預估房租</label>
-            <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()">
+        
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpRent">每週預估房租</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('rent')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label data-i18n="lblExpGroceries">食材與生活物資</label>
-            <input type="number" id="exp-groceries" placeholder="0" value="" step="10" onchange="saveSettings()">
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpGroceries">食材與生活物資</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-groceries" placeholder="0" value="" step="10" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('groceries')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label data-i18n="lblExpTransport">交通油錢支出</label>
-            <input type="number" id="exp-transport" placeholder="0" value="" step="5" onchange="saveSettings()">
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpTransport">交通油錢支出</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-transport" placeholder="0" value="" step="5" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('transport')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label data-i18n="lblExpOthers">其他娛樂與雜支</label>
-            <input type="number" id="exp-others" placeholder="0" value="" step="5" onchange="saveSettings()">
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: none; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpOthers">其他娛樂與雜支</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-others" placeholder="0" value="" step="5" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('others')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -280,16 +301,7 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; flex-direction: column; align-items: stretch;">
-            <label style="color: var(--orange); font-weight: bold; width: 100%; margin-bottom: 4px;" data-i18n="lblDailyExpense">💸 當日支出</label>
-            <div class="expense-add-box">
-                <input type="text" id="daily-expense-note" placeholder="項目備註 (如: 晚餐)" data-i18n-ph="phExpenseNote">
-                <input type="number" id="daily-expense-amount" placeholder="金額" data-i18n-ph="phExpenseAmount">
-                <button type="button" class="btn-add-expense" onclick="addDailyExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
-            </div>
-        </div>
-
-        <div class="btn-stack">
+        <div class="btn-stack" style="margin-top: 12px;">
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="saveCurrentShift()" data-i18n="btnSaveShift">確定排入班表 (單日)</button>
                 <button class="btn btn-outline" onclick="deselectDate()" data-i18n="btnDeselect">取消選取</button>
@@ -463,9 +475,6 @@
             lblStartTime: "上班時間",
             lblEndTime: "下班時間",
             lblBreakTime: "扣除 Smoko (分鐘)",
-            lblDailyExpense: "💸 當日支出",
-            phExpenseNote: "項目備註 (如: 晚餐)",
-            phExpenseAmount: "金額",
             btnAddExpense: "➕ 增加",
             secFixedExpenseList: "固定支出明細表",
             emptyFixedExpenseMsg: "尚未設定每週固定開銷",
@@ -540,9 +549,6 @@
             lblStartTime: "Start Time",
             lblEndTime: "End Time",
             lblBreakTime: "Deduct Smoko (Mins)",
-            lblDailyExpense: "💸 Daily Expense",
-            phExpenseNote: "Note (e.g. Dinner)",
-            phExpenseAmount: "Amount",
             btnAddExpense: "➕ Add",
             secFixedExpenseList: "Fixed Expenses Schedule",
             emptyFixedExpenseMsg: "No fixed weekly expenses set",
@@ -617,9 +623,6 @@
             lblStartTime: "出勤時間",
             lblEndTime: "退勤時間",
             lblBreakTime: "休憩時間 (分)",
-            lblDailyExpense: "💸 當日支出",
-            phExpenseNote: "メモ (例: 夕食)",
-            phExpenseAmount: "金額",
             btnAddExpense: "➕ 追加",
             secFixedExpenseList: "固定支出明細表",
             emptyFixedExpenseMsg: "固定費用の設定がありません",
@@ -694,9 +697,6 @@
             lblStartTime: "출근 시간",
             lblEndTime: "퇴근 시간",
             lblBreakTime: "휴게 시간 (분)",
-            lblDailyExpense: "💸 당일 지출",
-            phExpenseNote: "메모 (예: 저녁)",
-            phExpenseAmount: "금액",
             btnAddExpense: "➕ 추가",
             secFixedExpenseList: "고정 지출 명세표",
             emptyFixedExpenseMsg: "설정된 주간 고정 지출이 없습니다",
@@ -763,10 +763,6 @@
         applyLanguage();
         renderCalendar();
         deselectDate();
-
-        document.getElementById('daily-expense-amount').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') addDailyExpenseItem();
-        });
     }
 
     function forceRefreshApp() {
@@ -796,13 +792,6 @@
             const key = el.getAttribute('data-i18n');
             if (langData[key]) {
                 el.innerHTML = langData[key];
-            }
-        });
-
-        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-            const key = el.getAttribute('data-i18n-ph');
-            if (langData[key]) {
-                el.placeholder = langData[key];
             }
         });
         calculateAll();
@@ -869,6 +858,12 @@
         toggleCustomTaxInput();
     }
 
+    function addFixedExpenseItem(type) {
+        saveSettings();
+        const msgs = { zh: '✅ 已更新開銷金額！', en: '✅ Expense updated!', ja: '✅ 更新しました！', ko: '✅ 업데이트되었습니다!' };
+        alert(msgs[currentLang] || msgs.zh);
+    }
+
     function manualSaveAll() {
         saveSettings();
         localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
@@ -929,7 +924,6 @@
             const el = document.createElement('div'); el.className = 'day'; el.innerText = d;
             const dateStr = formatDateKey(new Date(year, month, d));
             
-            // 獨立的今日日期醒目提示
             if (year === today.getFullYear() && month === today.getMonth() && d === today.getDate()) {
                 el.classList.add('today-highlight');
             }
@@ -950,9 +944,6 @@
         selectedDate = new Date(y, m, d);
         updateSelectedDateDisplay();
 
-        document.getElementById('daily-expense-note').value = '';
-        document.getElementById('daily-expense-amount').value = '';
-
         if (isContinuousMode) {
             saveCurrentShift();
         } else {
@@ -970,45 +961,6 @@
         renderCalendar();
     }
 
-    function addDailyExpenseItem() {
-        if (!selectedDate) {
-            const msgs = { zh: '請先選擇日期！', en: 'Please select a date first!', ja: '日付を選択してください！', ko: '날짜를 먼저 선택하세요!' };
-            alert(msgs[currentLang] || msgs.zh);
-            return;
-        }
-
-        const dateStr = formatDateKey(selectedDate);
-        const noteInput = document.getElementById('daily-expense-note');
-        const amountInput = document.getElementById('daily-expense-amount');
-
-        const note = noteInput.value.trim() || '支出';
-        const amount = parseFloat(amountInput.value);
-
-        if (isNaN(amount) || amount <= 0) {
-            const msgs = { zh: '請輸入有效的金額！', en: 'Please enter a valid amount!', ja: '正確な金額を入力してください！', ko: '올바른 금액을 입력하세요!' };
-            alert(msgs[currentLang] || msgs.zh);
-            return;
-        }
-
-        if (!dailyExpenses[dateStr]) dailyExpenses[dateStr] = [];
-
-        dailyExpenses[dateStr].push({
-            id: Date.now() + Math.random(),
-            note: note,
-            amount: amount
-        });
-
-        localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
-        
-        noteInput.value = '';
-        amountInput.value = '';
-        
-        document.getElementById('expense-accordion-content').style.display = 'block';
-        document.getElementById('expense-accordion-arrow').innerText = '▲';
-
-        calculateAll();
-    }
-
     function deleteExpenseItem(dateStr, itemId) {
         if (dailyExpenses[dateStr]) {
             dailyExpenses[dateStr] = dailyExpenses[dateStr].filter(item => item.id !== itemId);
@@ -1024,8 +976,6 @@
         selectedDate = null;
         updateSelectedDateDisplay();
         document.getElementById('shift-type').value = 'none';
-        document.getElementById('daily-expense-note').value = '';
-        document.getElementById('daily-expense-amount').value = '';
         toggleShiftInputs();
         renderCalendar();
     }
@@ -1256,7 +1206,6 @@
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(backupPayload)));
     }
 
-    // 渲染固定支出明細表
     function renderFixedExpenseList(weeksCount, rent, groceries, transport, others) {
         const container = document.getElementById('fixed-expense-container');
         const summaryCount = document.getElementById('fixed-expense-summary-count');
@@ -1290,7 +1239,6 @@
         });
     }
 
-    // 渲染帶日期的當日支出明細清單
     function renderDailyExpenseList() {
         const container = document.getElementById('daily-expense-container');
         const summaryCount = document.getElementById('expense-summary-count');
