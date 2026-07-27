@@ -787,7 +787,6 @@
             document.getElementById('lang-select').value = savedLang;
         }
 
-        // 同步summary的預設年月為目前日曆年月
         document.getElementById('summary-year-select').value = currentDate.getFullYear();
         document.getElementById('summary-month-select').value = currentDate.getMonth() + 1;
 
@@ -925,7 +924,6 @@
     function changeMonth(dir) {
         currentDate.setMonth(currentDate.getMonth() + dir);
         
-        // 同步更新下方總結的下拉選單
         document.getElementById('summary-year-select').value = currentDate.getFullYear();
         document.getElementById('summary-month-select').value = currentDate.getMonth() + 1;
 
@@ -1119,7 +1117,6 @@
 
         document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
 
-        // 取得使用者在統計總結下拉選單選擇的年份與月份
         const selectedSummaryYear = parseInt(document.getElementById('summary-year-select').value);
         const selectedSummaryMonth = parseInt(document.getElementById('summary-month-select').value);
 
@@ -1154,7 +1151,6 @@
                 const sYear = d.getFullYear();
                 const sMonth = d.getMonth() + 1;
 
-                // 檢查是否屬於選定年月的班表
                 const isSelectedMonth = (sYear === selectedSummaryYear && sMonth === selectedSummaryMonth);
 
                 if (isSelectedMonth) {
@@ -1183,7 +1179,6 @@
                     totalWage += dayWage;
                 }
 
-                // 顯示於已排定班表明細（維持全部顯示或依需求）
                 const item = document.createElement('div');
                 item.className = 'shift-item';
                 const dayName = translations[currentLang].weekdays[d.getDay()];
