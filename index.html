@@ -104,7 +104,7 @@
         .empty-text { color: #94a3b8; text-align: center; padding: 20px 0; font-size: 14px; line-height: 1.6; }
         .shift-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
         
-        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; }
         .total-row { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 8px; font-weight: 500; }
         
         .net-pay-box { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 12px; padding: 12px; margin-top: 12px; color: var(--green-text); }
@@ -140,6 +140,13 @@
         }
         .btn-del-expense {
             background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 2px 6px;
+        }
+        
+        .summary-month-selects {
+            display: flex; gap: 4px; align-items: center;
+        }
+        .summary-month-selects select {
+            width: auto; padding: 4px 6px; font-size: 13px; font-weight: bold; background: #f8fafc;
         }
     </style>
 </head>
@@ -223,21 +230,42 @@
             <input type="number" id="save-target" placeholder="0" value="" step="100" onchange="saveSettings()">
         </div>
         <div style="margin: 10px 0 6px 0; font-size: 13px; font-weight: bold; color: #475569;" data-i18n="secExpHead">💸 預估開銷支出紀錄</div>
-        <div class="form-group">
-            <label data-i18n="lblExpRent">每週預估房租</label>
-            <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()">
+        
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpRent">每週預估房租</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('rent')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label data-i18n="lblExpGroceries">食材與生活物資</label>
-            <input type="number" id="exp-groceries" placeholder="0" value="" step="10" onchange="saveSettings()">
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpGroceries">食材與生活物資</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-groceries" placeholder="0" value="" step="10" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('groceries')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label data-i18n="lblExpTransport">交通油錢支出</label>
-            <input type="number" id="exp-transport" placeholder="0" value="" step="5" onchange="saveSettings()">
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpTransport">交通油錢支出</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-transport" placeholder="0" value="" step="5" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('transport')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label data-i18n="lblExpOthers">其他娛樂與雜支</label>
-            <input type="number" id="exp-others" placeholder="0" value="" step="5" onchange="saveSettings()">
+        <div class="form-group" style="flex-direction: column; align-items: stretch; border-bottom: none; padding-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <label data-i18n="lblExpOthers">其他娛樂與雜支</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="number" id="exp-others" placeholder="0" value="" step="5" onchange="saveSettings()" style="width: 100px;">
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('others')" data-i18n="btnAddExpense">➕ 增加</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -280,16 +308,7 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; flex-direction: column; align-items: stretch;">
-            <label style="color: var(--orange); font-weight: bold; width: 100%; margin-bottom: 4px;" data-i18n="lblDailyExpense">💸 當日支出</label>
-            <div class="expense-add-box">
-                <input type="text" id="daily-expense-note" placeholder="項目備註 (如: 晚餐)" data-i18n-ph="phExpenseNote">
-                <input type="number" id="daily-expense-amount" placeholder="金額" data-i18n-ph="phExpenseAmount">
-                <button type="button" class="btn-add-expense" onclick="addDailyExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
-            </div>
-        </div>
-
-        <div class="btn-stack">
+        <div class="btn-stack" style="margin-top: 12px;">
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="saveCurrentShift()" data-i18n="btnSaveShift">確定排入班表 (單日)</button>
                 <button class="btn btn-outline" onclick="deselectDate()" data-i18n="btnDeselect">取消選取</button>
@@ -348,7 +367,36 @@
         </div>
 
         <div class="summary-row">
-            <span><span data-i18n="lblSumWage">班表薪資總計</span> (<span class="curr-txt">AUD</span>)</span>
+            <div class="summary-month-selects">
+                <select id="summary-year-select" onchange="calculateAll()">
+                    <option value="2026" selected>2026年</option>
+                    <option value="2027">2027年</option>
+                    <option value="2028">2028年</option>
+                    <option value="2029">2029年</option>
+                    <option value="2030">2030年</option>
+                    <option value="2031">2031年</option>
+                    <option value="2032">2032年</option>
+                    <option value="2033">2033年</option>
+                    <option value="2034">2034年</option>
+                    <option value="2035">2035年</option>
+                    <option value="2036">2036年</option>
+                </select>
+                <select id="summary-month-select" onchange="calculateAll()">
+                    <option value="1">1月</option>
+                    <option value="2">2月</option>
+                    <option value="3">3月</option>
+                    <option value="4">4月</option>
+                    <option value="5">5月</option>
+                    <option value="6">6月</option>
+                    <option value="7" selected>7月</option>
+                    <option value="8">8月</option>
+                    <option value="9">9月</option>
+                    <option value="10">10月</option>
+                    <option value="11">11月</option>
+                    <option value="12">12月</option>
+                </select>
+                <span style="font-size: 13px; color: #64748b;">(<span class="curr-txt">AUD</span>)</span>
+            </div>
             <span id="summary-wage-subtotal" style="font-weight: bold;">$0.00</span>
         </div>
         <div class="summary-row">
@@ -463,9 +511,6 @@
             lblStartTime: "上班時間",
             lblEndTime: "下班時間",
             lblBreakTime: "扣除 Smoko (分鐘)",
-            lblDailyExpense: "💸 當日支出",
-            phExpenseNote: "項目備註 (如: 晚餐)",
-            phExpenseAmount: "金額",
             btnAddExpense: "➕ 增加",
             secFixedExpenseList: "固定支出明細表",
             emptyFixedExpenseMsg: "尚未設定每週固定開銷",
@@ -540,9 +585,6 @@
             lblStartTime: "Start Time",
             lblEndTime: "End Time",
             lblBreakTime: "Deduct Smoko (Mins)",
-            lblDailyExpense: "💸 Daily Expense",
-            phExpenseNote: "Note (e.g. Dinner)",
-            phExpenseAmount: "Amount",
             btnAddExpense: "➕ Add",
             secFixedExpenseList: "Fixed Expenses Schedule",
             emptyFixedExpenseMsg: "No fixed weekly expenses set",
@@ -617,9 +659,6 @@
             lblStartTime: "出勤時間",
             lblEndTime: "退勤時間",
             lblBreakTime: "休憩時間 (分)",
-            lblDailyExpense: "💸 當日支出",
-            phExpenseNote: "メモ (例: 夕食)",
-            phExpenseAmount: "金額",
             btnAddExpense: "➕ 追加",
             secFixedExpenseList: "固定支出明細表",
             emptyFixedExpenseMsg: "固定費用の設定がありません",
@@ -694,9 +733,6 @@
             lblStartTime: "출근 시간",
             lblEndTime: "퇴근 시간",
             lblBreakTime: "휴게 시간 (분)",
-            lblDailyExpense: "💸 당일 지출",
-            phExpenseNote: "메모 (예: 저녁)",
-            phExpenseAmount: "금액",
             btnAddExpense: "➕ 추가",
             secFixedExpenseList: "고정 지출 명세표",
             emptyFixedExpenseMsg: "설정된 주간 고정 지출이 없습니다",
@@ -759,14 +795,13 @@
             document.getElementById('lang-select').value = savedLang;
         }
 
+        document.getElementById('summary-year-select').value = currentDate.getFullYear();
+        document.getElementById('summary-month-select').value = currentDate.getMonth() + 1;
+
         loadSettings();
         applyLanguage();
         renderCalendar();
         deselectDate();
-
-        document.getElementById('daily-expense-amount').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') addDailyExpenseItem();
-        });
     }
 
     function forceRefreshApp() {
@@ -796,13 +831,6 @@
             const key = el.getAttribute('data-i18n');
             if (langData[key]) {
                 el.innerHTML = langData[key];
-            }
-        });
-
-        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-            const key = el.getAttribute('data-i18n-ph');
-            if (langData[key]) {
-                el.placeholder = langData[key];
             }
         });
         calculateAll();
@@ -869,6 +897,12 @@
         toggleCustomTaxInput();
     }
 
+    function addFixedExpenseItem(type) {
+        saveSettings();
+        const msgs = { zh: '✅ 已更新開銷金額！', en: '✅ Expense updated!', ja: '✅ 更新しました！', ko: '✅ 업데이트되었습니다!' };
+        alert(msgs[currentLang] || msgs.zh);
+    }
+
     function manualSaveAll() {
         saveSettings();
         localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
@@ -897,6 +931,10 @@
 
     function changeMonth(dir) {
         currentDate.setMonth(currentDate.getMonth() + dir);
+        
+        document.getElementById('summary-year-select').value = currentDate.getFullYear();
+        document.getElementById('summary-month-select').value = currentDate.getMonth() + 1;
+
         renderCalendar();
     }
 
@@ -949,9 +987,6 @@
         selectedDate = new Date(y, m, d);
         updateSelectedDateDisplay();
 
-        document.getElementById('daily-expense-note').value = '';
-        document.getElementById('daily-expense-amount').value = '';
-
         if (isContinuousMode) {
             saveCurrentShift();
         } else {
@@ -969,45 +1004,6 @@
         renderCalendar();
     }
 
-    function addDailyExpenseItem() {
-        if (!selectedDate) {
-            const msgs = { zh: '請先選擇日期！', en: 'Please select a date first!', ja: '日付を選択してください！', ko: '날짜를 먼저 선택하세요!' };
-            alert(msgs[currentLang] || msgs.zh);
-            return;
-        }
-
-        const dateStr = formatDateKey(selectedDate);
-        const noteInput = document.getElementById('daily-expense-note');
-        const amountInput = document.getElementById('daily-expense-amount');
-
-        const note = noteInput.value.trim() || '支出';
-        const amount = parseFloat(amountInput.value);
-
-        if (isNaN(amount) || amount <= 0) {
-            const msgs = { zh: '請輸入有效的金額！', en: 'Please enter a valid amount!', ja: '正確な金額を入力してください！', ko: '올바른 금액을 입력하세요!' };
-            alert(msgs[currentLang] || msgs.zh);
-            return;
-        }
-
-        if (!dailyExpenses[dateStr]) dailyExpenses[dateStr] = [];
-
-        dailyExpenses[dateStr].push({
-            id: Date.now() + Math.random(),
-            note: note,
-            amount: amount
-        });
-
-        localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
-        
-        noteInput.value = '';
-        amountInput.value = '';
-        
-        document.getElementById('expense-accordion-content').style.display = 'block';
-        document.getElementById('expense-accordion-arrow').innerText = '▲';
-
-        calculateAll();
-    }
-
     function deleteExpenseItem(dateStr, itemId) {
         if (dailyExpenses[dateStr]) {
             dailyExpenses[dateStr] = dailyExpenses[dateStr].filter(item => item.id !== itemId);
@@ -1023,8 +1019,6 @@
         selectedDate = null;
         updateSelectedDateDisplay();
         document.getElementById('shift-type').value = 'none';
-        document.getElementById('daily-expense-note').value = '';
-        document.getElementById('daily-expense-amount').value = '';
         toggleShiftInputs();
         renderCalendar();
     }
@@ -1131,6 +1125,9 @@
 
         document.getElementById('summary-tax-rate-label').innerText = taxRate + '%';
 
+        const selectedSummaryYear = parseInt(document.getElementById('summary-year-select').value);
+        const selectedSummaryMonth = parseInt(document.getElementById('summary-month-select').value);
+
         const container = document.getElementById('week-shifts-container');
         container.innerHTML = '';
 
@@ -1158,44 +1155,58 @@
         sortedKeys.forEach(dateStr => {
             const shift = shiftData[dateStr];
             if (shift && shift.type !== 'none') {
-                shiftDaysCount++;
                 const d = new Date(dateStr + 'T00:00:00');
-                const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
-                activeWeeks.add(weekKey);
+                const sYear = d.getFullYear();
+                const sMonth = d.getMonth() + 1;
 
-                const hours = calculateShiftHours(shift.start, shift.end, shift.breakMin);
-                totalHours += hours;
+                const isSelectedMonth = (sYear === selectedSummaryYear && sMonth === selectedSummaryMonth);
 
-                let rate = base * (1 + casual / 100);
-                let typeName = shiftTypeMap[currentLang][shift.type] || shift.type;
-                
-                if (shift.type === 'night') { rate = rate * 1.15; }
-                else if (shift.type === 'sunday') { rate = base * (1 + sundayLoad / 100); }
-                else if (shift.type === 'double') { rate = base * (1 + doubleLoad / 100); }
+                if (isSelectedMonth) {
+                    shiftDaysCount++;
+                    const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
+                    activeWeeks.add(weekKey);
 
-                let dayWage = 0;
-                if (otThreshold > 0 && hours > otThreshold) {
-                    const normalHours = otThreshold;
-                    const otHours = hours - otThreshold;
-                    dayWage = (normalHours * rate) + (otHours * rate * 1.5);
-                } else {
-                    dayWage = hours * rate;
+                    const hours = calculateShiftHours(shift.start, shift.end, shift.breakMin);
+                    totalHours += hours;
+
+                    let rate = base * (1 + casual / 100);
+                    
+                    if (shift.type === 'night') { rate = rate * 1.15; }
+                    else if (shift.type === 'sunday') { rate = base * (1 + sundayLoad / 100); }
+                    else if (shift.type === 'double') { rate = base * (1 + doubleLoad / 100); }
+
+                    let dayWage = 0;
+                    if (otThreshold > 0 && hours > otThreshold) {
+                        const normalHours = otThreshold;
+                        const otHours = hours - otThreshold;
+                        dayWage = (normalHours * rate) + (otHours * rate * 1.5);
+                    } else {
+                        dayWage = hours * rate;
+                    }
+
+                    totalWage += dayWage;
                 }
-
-                totalWage += dayWage;
 
                 const item = document.createElement('div');
                 item.className = 'shift-item';
                 const dayName = translations[currentLang].weekdays[d.getDay()];
+                const hoursAll = calculateShiftHours(shift.start, shift.end, shift.breakMin);
+                let rateAll = base * (1 + casual / 100);
+                if (shift.type === 'night') rateAll *= 1.15;
+                else if (shift.type === 'sunday') rateAll = base * (1 + sundayLoad / 100);
+                else if (shift.type === 'double') rateAll = base * (1 + doubleLoad / 100);
+                const dayWageAll = hoursAll * rateAll;
+                const typeName = shiftTypeMap[currentLang][shift.type] || shift.type;
+
                 item.innerHTML = `<span>${d.getMonth()+1}/${d.getDate()} (${dayName}) - ${typeName}</span>
-                                  <span>${hours.toFixed(2)}hrs / <strong>${formatMoney(dayWage)}</strong></span>`;
+                                  <span>${hoursAll.toFixed(2)}hrs / <strong>${formatMoney(dayWageAll)}</strong></span>`;
                 container.appendChild(item);
             }
         });
 
-        document.getElementById('shift-summary-count').innerText = `(${shiftDaysCount}天 / ${totalHours.toFixed(2)}hrs)`;
+        document.getElementById('shift-summary-count').innerText = `(${sortedKeys.length}天)`;
 
-        if (activeWeeks.size === 0) {
+        if (sortedKeys.length === 0) {
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
         }
 
@@ -1203,9 +1214,13 @@
         renderDailyExpenseList();
 
         let totalDailyExpenses = 0;
-        Object.values(dailyExpenses).forEach(arr => {
-            if (Array.isArray(arr)) {
-                arr.forEach(item => totalDailyExpenses += (parseFloat(item.amount) || 0));
+        Object.keys(dailyExpenses).forEach(dStr => {
+            const d = new Date(dStr + 'T00:00:00');
+            if (d.getFullYear() === selectedSummaryYear && (d.getMonth() + 1) === selectedSummaryMonth) {
+                const arr = dailyExpenses[dStr];
+                if (Array.isArray(arr)) {
+                    arr.forEach(item => totalDailyExpenses += (parseFloat(item.amount) || 0));
+                }
             }
         });
 
