@@ -123,9 +123,6 @@
             display: flex; justify-content: space-between; align-items: center;
         }
 
-        .expense-add-box { display: flex; gap: 6px; width: 100%; margin-top: 6px; align-items: center; }
-        .expense-add-box input[type="text"] { flex: 1.2; min-width: 0; text-align: left; }
-        .expense-add-box input[type="number"] { flex: 0.8; min-width: 0; text-align: right; }
         .btn-add-expense {
             background: var(--orange); color: white; border: none; padding: 7px 12px;
             border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; white-space: nowrap;
@@ -236,7 +233,7 @@
                 <label data-i18n="lblExpRent">每週預估房租</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="number" id="exp-rent" placeholder="0" value="" step="10" onchange="saveSettings()" style="width: 100px;">
-                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('rent')" data-i18n="btnAddExpense">➕ 增加</button>
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
                 </div>
             </div>
         </div>
@@ -245,7 +242,7 @@
                 <label data-i18n="lblExpGroceries">食材與生活物資</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="number" id="exp-groceries" placeholder="0" value="" step="10" onchange="saveSettings()" style="width: 100px;">
-                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('groceries')" data-i18n="btnAddExpense">➕ 增加</button>
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
                 </div>
             </div>
         </div>
@@ -254,7 +251,7 @@
                 <label data-i18n="lblExpTransport">交通油錢支出</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="number" id="exp-transport" placeholder="0" value="" step="5" onchange="saveSettings()" style="width: 100px;">
-                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('transport')" data-i18n="btnAddExpense">➕ 增加</button>
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
                 </div>
             </div>
         </div>
@@ -263,7 +260,7 @@
                 <label data-i18n="lblExpOthers">其他娛樂與雜支</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="number" id="exp-others" placeholder="0" value="" step="5" onchange="saveSettings()" style="width: 100px;">
-                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem('others')" data-i18n="btnAddExpense">➕ 增加</button>
+                    <button type="button" class="btn-add-expense" onclick="addFixedExpenseItem()" data-i18n="btnAddExpense">➕ 增加</button>
                 </div>
             </div>
         </div>
@@ -322,7 +319,7 @@
     </div>
 
     <div style="margin-bottom: 16px;">
-        <div class="accordion-header" onclick="toggleFixedExpenseAccordion()">
+        <div class="accordion-header" onclick="toggleAccordion('fixed-expense')">
             <span><span data-i18n="secFixedExpenseList">固定支出明細表</span> <span id="fixed-expense-summary-count">(0週 / $0.00)</span></span>
             <span id="fixed-expense-accordion-arrow">▼</span>
         </div>
@@ -334,7 +331,7 @@
     </div>
 
     <div style="margin-bottom: 16px;">
-        <div class="accordion-header" onclick="toggleExpenseAccordion()">
+        <div class="accordion-header" onclick="toggleAccordion('expense')">
             <span><span data-i18n="secExpenseList">支出明細紀錄</span> <span id="expense-summary-count">(0筆 / $0.00)</span></span>
             <span id="expense-accordion-arrow">▼</span>
         </div>
@@ -346,7 +343,7 @@
     </div>
 
     <div style="margin-bottom: 16px;">
-        <div class="accordion-header" onclick="toggleShiftAccordion()">
+        <div class="accordion-header" onclick="toggleAccordion('shift')">
             <span><span data-i18n="secShiftList">已排定班表明細</span> <span id="shift-summary-count">(0天 / 0hrs)</span></span>
             <span id="shift-accordion-arrow">▼</span>
         </div>
@@ -448,11 +445,11 @@
     </div>
 
     <div style="margin-bottom: 20px;">
-        <div class="accordion-header" onclick="toggleAccordion()">
+        <div class="accordion-header" onclick="toggleAccordion('backup')">
             <span data-i18n="secBackup">資料備份與傳輸管理</span>
-            <span id="accordion-arrow">▼</span>
+            <span id="backup-accordion-arrow">▼</span>
         </div>
-        <div class="accordion-content" id="accordion-content">
+        <div class="accordion-content" id="backup-accordion-content">
             <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;" data-i18n="backupDesc">複製下方文字即可備份；將備份文字貼入下方並點擊匯入即可還原。</div>
             <textarea id="backup-data" readonly></textarea>
             <div class="btn-group">
@@ -467,7 +464,7 @@
     let currentCurrency = 'AUD';
     let currentLang = 'zh';
     const FX_RATE = 22.63;
-    let currentDate = new Date(); // 動態抓取當前系統時間
+    let currentDate = new Date();
     let selectedDate = null;
     let isContinuousMode = false;
     let shiftData = {};
@@ -829,21 +826,14 @@
         const langData = translations[currentLang];
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            if (langData[key]) {
-                el.innerHTML = langData[key];
-            }
+            if (langData[key]) el.innerHTML = langData[key];
         });
         calculateAll();
     }
 
     function toggleCustomTaxInput() {
         const selectVal = document.getElementById('tax-rate').value;
-        const customContainer = document.getElementById('custom-tax-container');
-        if (selectVal === 'custom') {
-            customContainer.style.display = 'flex';
-        } else {
-            customContainer.style.display = 'none';
-        }
+        document.getElementById('custom-tax-container').style.display = (selectVal === 'custom') ? 'flex' : 'none';
     }
 
     function getEffectiveTaxRate() {
@@ -879,25 +869,16 @@
         try {
             const settings = JSON.parse(localStorage.getItem('salarySettingsProMax'));
             if (settings) {
-                if(settings.baseRate !== undefined) document.getElementById('base-rate').value = settings.baseRate;
-                if(settings.casualLoading !== undefined) document.getElementById('casual-loading').value = settings.casualLoading;
-                if(settings.sundayLoading !== undefined) document.getElementById('sunday-loading').value = settings.sundayLoading;
-                if(settings.doubleLoading !== undefined) document.getElementById('double-loading').value = settings.doubleLoading;
-                if(settings.otThreshold !== undefined) document.getElementById('ot-threshold').value = settings.otThreshold;
-                if(settings.ppeAllowance !== undefined) document.getElementById('ppe-allowance').value = settings.ppeAllowance;
-                if(settings.taxRate !== undefined) document.getElementById('tax-rate').value = settings.taxRate;
-                if(settings.customTaxVal !== undefined) document.getElementById('custom-tax-val').value = settings.customTaxVal;
-                if(settings.saveTarget !== undefined) document.getElementById('save-target').value = settings.saveTarget;
-                if(settings.expRent !== undefined) document.getElementById('exp-rent').value = settings.expRent;
-                if(settings.expGroceries !== undefined) document.getElementById('exp-groceries').value = settings.expGroceries;
-                if(settings.expTransport !== undefined) document.getElementById('exp-transport').value = settings.expTransport;
-                if(settings.expOthers !== undefined) document.getElementById('exp-others').value = settings.expOthers;
+                for (let key in settings) {
+                    const el = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                    if (el) el.value = settings[key];
+                }
             }
         } catch(e) {}
         toggleCustomTaxInput();
     }
 
-    function addFixedExpenseItem(type) {
+    function addFixedExpenseItem() {
         saveSettings();
         const msgs = { zh: '✅ 已更新開銷金額！', en: '✅ Expense updated!', ja: '✅ 更新しました！', ko: '✅ 업데이트되었습니다!' };
         alert(msgs[currentLang] || msgs.zh);
@@ -917,8 +898,7 @@
         document.getElementById('currency-flag').innerText = currentCurrency === 'AUD' ? '🇦🇺' : '🇹🇼';
         document.getElementById('net-box-code').innerText = currentCurrency;
         document.getElementById('net-box-flag').innerText = currentCurrency === 'AUD' ? '🇦🇺' : '🇹🇼';
-        const txts = document.querySelectorAll('.curr-txt');
-        txts.forEach(t => t.innerText = currentCurrency);
+        document.querySelectorAll('.curr-txt').forEach(t => t.innerText = currentCurrency);
         calculateAll();
     }
 
@@ -931,10 +911,8 @@
 
     function changeMonth(dir) {
         currentDate.setMonth(currentDate.getMonth() + dir);
-        
         document.getElementById('summary-year-select').value = currentDate.getFullYear();
         document.getElementById('summary-month-select').value = currentDate.getMonth() + 1;
-
         renderCalendar();
     }
 
@@ -942,15 +920,14 @@
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        if(currentLang === 'zh' || currentLang === 'ja') document.getElementById('calendar-month-year').innerText = `${year}年${month + 1}月`;
-        else if(currentLang === 'ko') document.getElementById('calendar-month-year').innerText = `${year}년 ${month + 1}월`;
+        if (currentLang === 'zh' || currentLang === 'ja') document.getElementById('calendar-month-year').innerText = `${year}年${month + 1}月`;
+        else if (currentLang === 'ko') document.getElementById('calendar-month-year').innerText = `${year}년 ${month + 1}월`;
         else document.getElementById('calendar-month-year').innerText = `${month + 1}/${year}`;
 
         const grid = document.getElementById('calendar-grid');
         grid.innerHTML = '';
 
-        const daysArr = translations[currentLang].weekdays;
-        daysArr.forEach(w => {
+        translations[currentLang].weekdays.forEach(w => {
             const el = document.createElement('div');
             el.className = 'weekday'; el.innerText = w; grid.appendChild(el);
         });
@@ -959,11 +936,11 @@
         const totalDays = new Date(year, month + 1, 0).getDate();
         const today = new Date();
 
-        for(let i=0; i<firstDayIndex; i++) {
+        for (let i = 0; i < firstDayIndex; i++) {
             const el = document.createElement('div'); el.className = 'day other-month'; grid.appendChild(el);
         }
 
-        for(let d=1; d<=totalDays; d++) {
+        for (let d = 1; d <= totalDays; d++) {
             const el = document.createElement('div'); el.className = 'day'; el.innerText = d;
             const dateStr = formatDateKey(new Date(year, month, d));
             
@@ -995,7 +972,7 @@
                 document.getElementById('shift-type').value = shiftData[dateStr].type;
                 document.getElementById('start-time').value = shiftData[dateStr].start || '07:00';
                 document.getElementById('end-time').value = shiftData[dateStr].end || '15:00';
-                document.getElementById('break-time').value = shiftData[dateStr].breakMin !== undefined ? shiftData[dateStr].breakMin : 30;
+                document.getElementById('break-time').value = shiftData[dateStr].breakMin ?? 30;
             } else {
                 document.getElementById('shift-type').value = 'none';
             }
@@ -1007,9 +984,7 @@
     function deleteExpenseItem(dateStr, itemId) {
         if (dailyExpenses[dateStr]) {
             dailyExpenses[dateStr] = dailyExpenses[dateStr].filter(item => item.id !== itemId);
-            if (dailyExpenses[dateStr].length === 0) {
-                delete dailyExpenses[dateStr];
-            }
+            if (dailyExpenses[dateStr].length === 0) delete dailyExpenses[dateStr];
             localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
             calculateAll();
         }
@@ -1030,8 +1005,8 @@
         }
         const m = selectedDate.getMonth();
         const d = selectedDate.getDate();
-        if(currentLang === 'zh' || currentLang === 'ja') document.getElementById('selected-date-str').innerText = `${m+1}月${d}日`;
-        else if(currentLang === 'ko') document.getElementById('selected-date-str').innerText = `${m+1}월 ${d}일`;
+        if (currentLang === 'zh' || currentLang === 'ja') document.getElementById('selected-date-str').innerText = `${m+1}月${d}日`;
+        else if (currentLang === 'ko') document.getElementById('selected-date-str').innerText = `${m+1}월 ${d}일`;
         else document.getElementById('selected-date-str').innerText = `${m+1}/${d}`;
     }
 
@@ -1067,8 +1042,9 @@
         }
         const dateStr = formatDateKey(selectedDate);
         const type = document.getElementById('shift-type').value;
-        if(type === 'none') { delete shiftData[dateStr]; }
-        else {
+        if (type === 'none') { 
+            delete shiftData[dateStr]; 
+        } else {
             shiftData[dateStr] = {
                 type: type,
                 start: document.getElementById('start-time').value,
@@ -1081,7 +1057,7 @@
     }
 
     function clearMonthShifts() {
-        if(confirm('Clear all data? / 確定清空所有數據？')) { 
+        if (confirm('Clear all data? / 確定清空所有數據？')) { 
             shiftData = {}; 
             dailyExpenses = {};
             localStorage.removeItem('shiftDataProMax'); 
@@ -1114,7 +1090,6 @@
         const doubleLoad = parseFloat(document.getElementById('double-loading').value) || 0;
         const otThreshold = parseFloat(document.getElementById('ot-threshold').value) || 0;
         const ppe = parseFloat(document.getElementById('ppe-allowance').value) || 0;
-        
         const taxRate = getEffectiveTaxRate();
         
         const target = parseFloat(document.getElementById('save-target').value) || 0;
@@ -1133,7 +1108,6 @@
 
         let totalWage = 0;
         let totalHours = 0;
-        let shiftDaysCount = 0;
         let activeWeeks = new Set();
         const sortedKeys = Object.keys(shiftData).sort();
 
@@ -1145,9 +1119,7 @@
         };
 
         if (sortedKeys.length > 0) {
-            const startDate = sortedKeys[0];
-            const endDate = sortedKeys[sortedKeys.length - 1];
-            document.getElementById('summary-date-range').innerText = `${startDate} ～ ${endDate} (${sortedKeys.length}天)`;
+            document.getElementById('summary-date-range').innerText = `${sortedKeys[0]} ～ ${sortedKeys[sortedKeys.length - 1]} (${sortedKeys.length}天)`;
         } else {
             document.getElementById('summary-date-range').innerText = translations[currentLang].noShifts;
         }
@@ -1156,59 +1128,37 @@
             const shift = shiftData[dateStr];
             if (shift && shift.type !== 'none') {
                 const d = new Date(dateStr + 'T00:00:00');
-                const sYear = d.getFullYear();
-                const sMonth = d.getMonth() + 1;
-
-                const isSelectedMonth = (sYear === selectedSummaryYear && sMonth === selectedSummaryMonth);
-
-                if (isSelectedMonth) {
-                    shiftDaysCount++;
-                    const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
-                    activeWeeks.add(weekKey);
-
+                if (d.getFullYear() === selectedSummaryYear && (d.getMonth() + 1) === selectedSummaryMonth) {
+                    activeWeeks.add(`${d.getFullYear()}-W${getWeekNumber(d)}`);
                     const hours = calculateShiftHours(shift.start, shift.end, shift.breakMin);
                     totalHours += hours;
 
                     let rate = base * (1 + casual / 100);
-                    
-                    if (shift.type === 'night') { rate = rate * 1.15; }
-                    else if (shift.type === 'sunday') { rate = base * (1 + sundayLoad / 100); }
-                    else if (shift.type === 'double') { rate = base * (1 + doubleLoad / 100); }
+                    if (shift.type === 'night') rate *= 1.15;
+                    else if (shift.type === 'sunday') rate = base * (1 + sundayLoad / 100);
+                    else if (shift.type === 'double') rate = base * (1 + doubleLoad / 100);
 
-                    let dayWage = 0;
-                    if (otThreshold > 0 && hours > otThreshold) {
-                        const normalHours = otThreshold;
-                        const otHours = hours - otThreshold;
-                        dayWage = (normalHours * rate) + (otHours * rate * 1.5);
-                    } else {
-                        dayWage = hours * rate;
-                    }
-
-                    totalWage += dayWage;
+                    totalWage += (otThreshold > 0 && hours > otThreshold) 
+                        ? (otThreshold * rate + (hours - otThreshold) * rate * 1.5) 
+                        : (hours * rate);
                 }
 
                 const item = document.createElement('div');
                 item.className = 'shift-item';
-                const dayName = translations[currentLang].weekdays[d.getDay()];
                 const hoursAll = calculateShiftHours(shift.start, shift.end, shift.breakMin);
                 let rateAll = base * (1 + casual / 100);
                 if (shift.type === 'night') rateAll *= 1.15;
                 else if (shift.type === 'sunday') rateAll = base * (1 + sundayLoad / 100);
                 else if (shift.type === 'double') rateAll = base * (1 + doubleLoad / 100);
-                const dayWageAll = hoursAll * rateAll;
-                const typeName = shiftTypeMap[currentLang][shift.type] || shift.type;
-
-                item.innerHTML = `<span>${d.getMonth()+1}/${d.getDate()} (${dayName}) - ${typeName}</span>
-                                  <span>${hoursAll.toFixed(2)}hrs / <strong>${formatMoney(dayWageAll)}</strong></span>`;
+                
+                item.innerHTML = `<span>${d.getMonth()+1}/${d.getDate()} (${translations[currentLang].weekdays[d.getDay()]}) - ${shiftTypeMap[currentLang][shift.type] || shift.type}</span>
+                                  <span>${hoursAll.toFixed(2)}hrs / <strong>${formatMoney(hoursAll * rateAll)}</strong></span>`;
                 container.appendChild(item);
             }
         });
 
         document.getElementById('shift-summary-count').innerText = `(${sortedKeys.length}天)`;
-
-        if (sortedKeys.length === 0) {
-            container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
-        }
+        if (sortedKeys.length === 0) container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
 
         renderFixedExpenseList(activeWeeks.size, rent, groceries, transport, others);
         renderDailyExpenseList();
@@ -1217,23 +1167,16 @@
         Object.keys(dailyExpenses).forEach(dStr => {
             const d = new Date(dStr + 'T00:00:00');
             if (d.getFullYear() === selectedSummaryYear && (d.getMonth() + 1) === selectedSummaryMonth) {
-                const arr = dailyExpenses[dStr];
-                if (Array.isArray(arr)) {
-                    arr.forEach(item => totalDailyExpenses += (parseFloat(item.amount) || 0));
-                }
+                dailyExpenses[dStr].forEach(item => totalDailyExpenses += (parseFloat(item.amount) || 0));
             }
         });
 
         const totalWeeksCount = Math.max(1, activeWeeks.size);
-        const totalFixedExpenses = (rent + groceries + transport + others) * totalWeeksCount;
-        const totalExpenses = totalFixedExpenses + totalDailyExpenses;
-
+        const totalExpenses = (rent + groceries + transport + others) * totalWeeksCount + totalDailyExpenses;
         const totalPpe = activeWeeks.size * ppe;
         const gross = totalWage + totalPpe;
         const tax = gross * (taxRate / 100);
         const net = gross - tax;
-
-        const superAmount = totalWage * 0.12;
         const finalSavings = net - totalExpenses;
 
         document.getElementById('summary-wage-subtotal').innerText = formatMoney(totalWage);
@@ -1241,59 +1184,45 @@
         document.getElementById('summary-gross').innerText = formatMoney(gross);
         document.getElementById('summary-tax').innerText = '-' + formatMoney(tax);
         document.getElementById('summary-net').innerText = formatMoney(net);
-        document.getElementById('summary-super').innerText = formatMoney(superAmount);
-
+        document.getElementById('summary-super').innerText = formatMoney(totalWage * 0.12);
         document.getElementById('summary-total-expenses').innerText = '-' + formatMoney(totalExpenses);
         document.getElementById('summary-savings-remains').innerText = formatMoney(finalSavings);
 
         const progressBar = document.getElementById('progress-bar');
-        const progressPercent = document.getElementById('progress-percent');
-        const progressBarText = document.getElementById('progress-bar-text');
-
         if (target > 0) {
             let pct = Math.min(100, Math.max(0, (finalSavings / target) * 100));
             progressBar.style.width = pct + '%';
-            progressPercent.innerText = pct.toFixed(1) + '%';
-            
-            if (finalSavings >= target) {
-                progressBarText.innerText = translations[currentLang].goalCongrats;
-            } else {
-                progressBarText.innerText = translations[currentLang].goalRemaining + formatMoney(target - finalSavings);
-            }
+            document.getElementById('progress-percent').innerText = pct.toFixed(1) + '%';
+            document.getElementById('progress-bar-text').innerText = (finalSavings >= target) 
+                ? translations[currentLang].goalCongrats 
+                : translations[currentLang].goalRemaining + formatMoney(target - finalSavings);
         } else {
             progressBar.style.width = '0%';
-            progressPercent.innerText = '0%';
-            progressBarText.innerText = translations[currentLang].goalUnset;
+            document.getElementById('progress-percent').innerText = '0%';
+            document.getElementById('progress-bar-text').innerText = translations[currentLang].goalUnset;
         }
 
-        const backupPayload = { shifts: shiftData, expenses: dailyExpenses };
-        document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify(backupPayload)));
+        document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify({ shifts: shiftData, expenses: dailyExpenses })));
     }
 
     function renderFixedExpenseList(weeksCount, rent, groceries, transport, others) {
         const container = document.getElementById('fixed-expense-container');
-        const summaryCount = document.getElementById('fixed-expense-summary-count');
         container.innerHTML = '';
-
         const weeklyTotal = rent + groceries + transport + others;
         const totalWeeks = Math.max(1, weeksCount);
-        const grandTotal = weeklyTotal * totalWeeks;
-
-        summaryCount.innerText = `(${totalWeeks}週 / ${formatMoney(grandTotal)})`;
+        document.getElementById('fixed-expense-summary-count').innerText = `(${totalWeeks}週 / ${formatMoney(weeklyTotal * totalWeeks)})`;
 
         if (weeklyTotal <= 0) {
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyFixedExpenseMsg}</div>`;
             return;
         }
 
-        const items = [
+        [
             { label: translations[currentLang].lblExpRent, amount: rent },
             { label: translations[currentLang].lblExpGroceries, amount: groceries },
             { label: translations[currentLang].lblExpTransport, amount: transport },
             { label: translations[currentLang].lblExpOthers, amount: others }
-        ];
-
-        items.forEach(item => {
+        ].forEach(item => {
             if (item.amount > 0) {
                 const el = document.createElement('div');
                 el.className = 'shift-item';
@@ -1305,87 +1234,51 @@
 
     function renderDailyExpenseList() {
         const container = document.getElementById('daily-expense-container');
-        const summaryCount = document.getElementById('expense-summary-count');
         container.innerHTML = '';
+        let grandTotal = 0, grandCount = 0;
 
-        const allDates = Object.keys(dailyExpenses).sort();
-        let grandTotal = 0;
-        let grandCount = 0;
-
-        allDates.forEach(dKey => {
-            const items = dailyExpenses[dKey] || [];
-            grandCount += items.length;
-            items.forEach(i => grandTotal += (parseFloat(i.amount) || 0));
+        Object.keys(dailyExpenses).sort().forEach(dKey => {
+            (dailyExpenses[dKey] || []).forEach(i => grandTotal += (parseFloat(i.amount) || 0));
+            grandCount += (dailyExpenses[dKey] || []).length;
         });
 
-        summaryCount.innerText = `(${grandCount}筆 / ${formatMoney(grandTotal)})`;
+        document.getElementById('expense-summary-count').innerText = `(${grandCount}筆 / ${formatMoney(grandTotal)})`;
 
         if (grandCount === 0) {
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyExpenseMsg}</div>`;
             return;
         }
 
-        allDates.forEach(dateStr => {
-            const items = dailyExpenses[dateStr] || [];
+        Object.keys(dailyExpenses).sort().forEach(dateStr => {
             const d = new Date(dateStr + 'T00:00:00');
-            const dateLabel = `${d.getMonth() + 1}月${d.getDate()}日`;
-
-            items.forEach(item => {
+            (dailyExpenses[dateStr] || []).forEach(item => {
                 const el = document.createElement('div');
                 el.className = 'expense-item';
                 el.innerHTML = `
-                    <div>
-                        <span class="expense-date-tag">${dateLabel}</span>
-                        <strong>${item.note}</strong>
-                    </div>
-                    <div>
-                        <span style="font-weight: bold; margin-right: 8px;">${formatMoney(item.amount)}</span>
-                        <button class="btn-del-expense" onclick="deleteExpenseItem('${dateStr}', ${item.id})" title="刪除">🗑️</button>
-                    </div>
+                    <div><span class="expense-date-tag">${d.getMonth() + 1}月${d.getDate()}日</span><strong>${item.note}</strong></div>
+                    <div><span style="font-weight: bold; margin-right: 8px;">${formatMoney(item.amount)}</span><button class="btn-del-expense" onclick="deleteExpenseItem('${dateStr}', ${item.id})">🗑️</button></div>
                 `;
                 container.appendChild(el);
             });
         });
     }
 
-    function toggleFixedExpenseAccordion() {
-        const content = document.getElementById('fixed-expense-accordion-content');
-        const arrow = document.getElementById('fixed-expense-accordion-arrow');
-        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
-        else { content.style.display = 'block'; arrow.innerText = '▲'; }
-    }
-
-    function toggleExpenseAccordion() {
-        const content = document.getElementById('expense-accordion-content');
-        const arrow = document.getElementById('expense-accordion-arrow');
-        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
-        else { content.style.display = 'block'; arrow.innerText = '▲'; }
-    }
-
-    function toggleShiftAccordion() {
-        const content = document.getElementById('shift-accordion-content');
-        const arrow = document.getElementById('shift-accordion-arrow');
-        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
-        else { content.style.display = 'block'; arrow.innerText = '▲'; }
-    }
-
-    function toggleAccordion() {
-        const content = document.getElementById('accordion-content');
-        const arrow = document.getElementById('accordion-arrow');
-        if (content.style.display === 'block') { content.style.display = 'none'; arrow.innerText = '▼'; } 
-        else { content.style.display = 'block'; arrow.innerText = '▲'; }
+    function toggleAccordion(type) {
+        const content = document.getElementById(`${type}-accordion-content`);
+        const arrow = document.getElementById(`${type}-accordion-arrow`);
+        const isVisible = content.style.display === 'block';
+        content.style.display = isVisible ? 'none' : 'block';
+        arrow.innerText = isVisible ? '▼' : '▲';
     }
 
     async function copyBackup() {
         const tx = document.getElementById('backup-data');
         try {
             await navigator.clipboard.writeText(tx.value);
-            const msgs = { zh: '✅ 已複製備份文字！', en: '✅ Copied to clipboard!', ja: '✅ コピーしました！', ko: '✅ 복사되었습니다!' };
-            alert(msgs[currentLang] || msgs.zh);
+            alert(translations[currentLang].btnCopyBackup === '複製備份資料' ? '✅ 已複製備份文字！' : '✅ Copied to clipboard!');
         } catch (err) {
             tx.select();
             document.execCommand('copy');
-            alert('Copied / 已複製');
         }
     }
 
@@ -1395,19 +1288,13 @@
             try {
                 const parsed = JSON.parse(decodeURIComponent(atob(str)));
                 if (parsed && typeof parsed === 'object') {
-                    if (parsed.shifts) {
-                        shiftData = parsed.shifts || {};
-                        dailyExpenses = parsed.expenses || {};
-                    } else {
-                        shiftData = parsed;
-                    }
+                    shiftData = parsed.shifts || parsed || {};
+                    dailyExpenses = parsed.expenses || {};
                     localStorage.setItem('shiftDataProMax', JSON.stringify(shiftData));
                     localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
                     renderCalendar();
                     alert('Restored / 還原成功！');
-                } else {
-                    throw new Error('Invalid format');
-                }
+                } else throw new Error();
             } catch(e) { alert('Failed / 格式錯誤'); }
         }
     }
@@ -1429,10 +1316,9 @@
         });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `GoalPay_Shifts_${new Date().toISOString().slice(0,10)}.csv`);
+        link.href = URL.createObjectURL(blob);
+        link.download = `GoalPay_Shifts_${new Date().toISOString().slice(0,10)}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
