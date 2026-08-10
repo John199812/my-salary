@@ -138,6 +138,11 @@
         .btn-del-expense {
             background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 2px 6px;
         }
+
+        /* 子下拉選單（月份分類）樣式 */
+        .sub-accordion { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; background: #fafafa; }
+        .sub-accordion-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f1f5f9; cursor: pointer; font-weight: bold; font-size: 13px; color: #334155; }
+        .sub-accordion-content { display: none; padding: 8px 12px; background: #fff; border-top: 1px solid var(--border); }
         
         .summary-month-selects {
             display: flex; gap: 4px; align-items: center;
@@ -317,6 +322,7 @@
         </div>
     </div>
 
+    <!-- 當日支出明細紀錄 (主下拉) -->
     <div style="margin-bottom: 16px;">
         <div class="accordion-header" onclick="toggleAccordion('expense')">
             <span><span data-i18n="secExpenseList">當日支出明細紀錄</span> <span id="expense-summary-count">(0筆 / $0.00)</span></span>
@@ -329,6 +335,7 @@
         </div>
     </div>
 
+    <!-- 已排定班表明細 (主下拉) -->
     <div style="margin-bottom: 16px;">
         <div class="accordion-header" onclick="toggleAccordion('shift')">
             <span><span data-i18n="secShiftList">已排定班表明細</span> <span id="shift-summary-count">(0天 / 0hrs)</span></span>
@@ -786,7 +793,6 @@
         document.getElementById('summary-year-select').value = currentDate.getFullYear();
         document.getElementById('summary-month-select').value = currentDate.getMonth() + 1;
 
-        // 設定預設日期選擇器為今天
         const todayStr = formatDateKey(new Date());
         document.getElementById('expense-date').value = todayStr;
 
@@ -890,7 +896,6 @@
 
         localStorage.setItem('dailyExpensesProMax', JSON.stringify(dailyExpenses));
         
-        // 清空輸入欄位
         document.getElementById('expense-note').value = '';
         document.getElementById('expense-amount').value = '';
         
@@ -980,7 +985,6 @@
         selectedDate = new Date(y, m, d);
         updateSelectedDateDisplay();
 
-        // 點擊日曆時也同步帶入到新增支出欄位的預設日期
         document.getElementById('expense-date').value = formatDateKey(selectedDate);
 
         if (isContinuousMode) {
@@ -1119,9 +1123,6 @@
         const selectedSummaryYear = parseInt(document.getElementById('summary-year-select').value);
         const selectedSummaryMonth = parseInt(document.getElementById('summary-month-select').value);
 
-        const container = document.getElementById('week-shifts-container');
-        container.innerHTML = '';
-
         let totalWage = 0;
         let totalHours = 0;
         let activeWeeks = new Set();
@@ -1158,26 +1159,16 @@
                         ? (otThreshold * rate + (hours - otThreshold) * rate * 1.5) 
                         : (hours * rate);
                 }
-
-                const item = document.createElement('div');
-                item.className = 'shift-item';
-                const hoursAll = calculateShiftHours(shift.start, shift.end, shift.breakMin);
-                let rateAll = base * (1 + casual / 100);
-                if (shift.type === 'night') rateAll *= 1.15;
-                else if (shift.type === 'sunday') rateAll = base * (1 + sundayLoad / 100);
-                else if (shift.type === 'double') rateAll = base * (1 + doubleLoad / 100);
-                
-                item.innerHTML = `<span>${d.getMonth()+1}/${d.getDate()} (${translations[currentLang].weekdays[d.getDay()]}) - ${shiftTypeMap[currentLang][shift.type] || shift.type}</span>
-                                  <span>${hoursAll.toFixed(2)}hrs / <strong>${formatMoney(hoursAll * rateAll)}</strong></span>`;
-                container.appendChild(item);
             }
         });
 
-        document.getElementById('shift-summary-count').innerText = `(${sortedKeys.length}天)`;
-        if (sortedKeys.length === 0) container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
+        // 渲染「已排定班表明細」子下拉（依月份分組）
+        renderShiftGroupedList(sortedKeys, base, casual, sundayLoad, doubleLoad, otThreshold, shiftTypeMap);
 
         renderFixedExpenseList(activeWeeks.size, rent);
-        renderDailyExpenseList();
+        
+        // 渲染「當日支出明細」子下拉（依月份分組）
+        renderDailyExpenseGroupedList();
 
         let totalDailyExpenses = 0;
         Object.keys(dailyExpenses).forEach(dStr => {
@@ -1239,14 +1230,22 @@
         container.appendChild(el);
     }
 
-    function renderDailyExpenseList() {
+    // 依月份分組渲染：當日支出明細紀錄
+    function renderDailyExpenseGroupedList() {
         const container = document.getElementById('daily-expense-container');
         container.innerHTML = '';
+        
         let grandTotal = 0, grandCount = 0;
+        let groups = {};
 
-        Object.keys(dailyExpenses).sort().forEach(dKey => {
-            (dailyExpenses[dKey] || []).forEach(i => grandTotal += (parseFloat(i.amount) || 0));
-            grandCount += (dailyExpenses[dKey] || []).length;
+        Object.keys(dailyExpenses).sort().forEach(dateStr => {
+            (dailyExpenses[dateStr] || []).forEach(item => {
+                grandTotal += (parseFloat(item.amount) || 0);
+                grandCount++;
+                const monthKey = dateStr.slice(0, 7); // "YYYY-MM"
+                if (!groups[monthKey]) groups[monthKey] = [];
+                groups[monthKey].push({ dateStr, ...item });
+            });
         });
 
         document.getElementById('expense-summary-count').innerText = `(${grandCount}筆 / ${formatMoney(grandTotal)})`;
@@ -1256,18 +1255,114 @@
             return;
         }
 
-        Object.keys(dailyExpenses).sort().forEach(dateStr => {
-            const d = new Date(dateStr + 'T00:00:00');
-            (dailyExpenses[dateStr] || []).forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'expense-item';
-                el.innerHTML = `
-                    <div><span class="expense-date-tag">${d.getMonth() + 1}月${d.getDate()}日</span><strong>${item.note}</strong></div>
-                    <div><span style="font-weight: bold; margin-right: 8px;">${formatMoney(item.amount)}</span><button class="btn-del-expense" onclick="deleteExpenseItem('${dateStr}', ${item.id})">🗑️</button></div>
-                `;
-                container.appendChild(el);
-            });
+        // 依照月份由新到舊排序
+        const sortedMonths = Object.keys(groups).sort().reverse();
+
+        sortedMonths.forEach(mKey => {
+            const [y, m] = mKey.split('-');
+            const monthItems = groups[mKey];
+            let monthTotal = monthItems.reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
+
+            const subId = `sub-exp-${mKey}`;
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-accordion';
+            subDiv.innerHTML = `
+                <div class="sub-accordion-header" onclick="toggleSubAccordion('${subId}')">
+                    <span>📅 ${y}年${parseInt(m)}月 (${monthItems.pushed || monthItems.length}筆)</span>
+                    <span><strong>${formatMoney(monthTotal)}</strong> ▼</span>
+                </div>
+                <div class="sub-accordion-content" id="${subId}">
+                    ${monthItems.map(item => {
+                        const d = new Date(item.dateStr + 'T00:00:00');
+                        return `
+                            <div class="expense-item">
+                                <div><span class="expense-date-tag">${d.getMonth() + 1}月${d.getDate()}日</span><strong>${item.note}</strong></div>
+                                <div><span style="font-weight: bold; margin-right: 8px;">${formatMoney(item.amount)}</span><button class="btn-del-expense" onclick="deleteExpenseItem('${item.dateStr}', ${item.id})">🗑️</button></div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            container.appendChild(subDiv);
         });
+    }
+
+    // 依月份分組渲染：已排定班表明細
+    function renderShiftGroupedList(sortedKeys, base, casual, sundayLoad, doubleLoad, otThreshold, shiftTypeMap) {
+        const container = document.getElementById('week-shifts-container');
+        container.innerHTML = '';
+
+        let validShifts = [];
+        let totalHrsAll = 0;
+        let groups = {};
+
+        sortedKeys.forEach(dateStr => {
+            const shift = shiftData[dateStr];
+            if (shift && shift.type !== 'none') {
+                const d = new Date(dateStr + 'T00:00:00');
+                const hours = calculateShiftHours(shift.start, shift.end, shift.breakMin);
+                totalHrsAll += hours;
+
+                let rate = base * (1 + casual / 100);
+                if (shift.type === 'night') rate *= 1.15;
+                else if (shift.type === 'sunday') rate = base * (1 + sundayLoad / 100);
+                else if (shift.type === 'double') rate = base * (1 + doubleLoad / 100);
+
+                let wage = (otThreshold > 0 && hours > otThreshold) 
+                    ? (otThreshold * rate + (hours - otThreshold) * rate * 1.5) 
+                    : (hours * rate);
+
+                const monthKey = dateStr.slice(0, 7);
+                if (!groups[monthKey]) groups[monthKey] = [];
+                groups[monthKey].push({ dateStr, shift, hours, wage });
+            }
+        });
+
+        document.getElementById('shift-summary-count').innerText = `(${Object.values(groups).reduce((acc, cur) => acc + cur.length, 0)}天 / ${totalHrsAll.toFixed(1)}hrs)`;
+
+        if (Object.keys(groups).length === 0) {
+            container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyShiftMsg}</div>`;
+            return;
+        }
+
+        const sortedMonths = Object.keys(groups).sort().reverse();
+
+        sortedMonths.forEach(mKey => {
+            const [y, m] = mKey.split('-');
+            const monthShifts = groups[mKey];
+            let monthTotalWage = monthShifts.reduce((sum, i) => sum + i.wage, 0);
+            let monthTotalHrs = monthShifts.reduce((sum, i) => sum + i.hours, 0);
+
+            const subId = `sub-shift-${mKey}`;
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-accordion';
+            subDiv.innerHTML = `
+                <div class="sub-accordion-header" onclick="toggleSubAccordion('${subId}')">
+                    <span>📅 ${y}年${parseInt(m)}月 (${monthShifts.length}天 / ${monthTotalHrs.toFixed(1)}hrs)</span>
+                    <span><strong>${formatMoney(monthTotalWage)}</strong> ▼</span>
+                </div>
+                <div class="sub-accordion-content" id="${subId}">
+                    ${monthShifts.map(item => {
+                        const d = new Date(item.dateStr + 'T00:00:00');
+                        return `
+                            <div class="shift-item">
+                                <span>${d.getMonth()+1}/${d.getDate()} (${translations[currentLang].weekdays[d.getDay()]}) - ${shiftTypeMap[currentLang][item.shift.type] || item.shift.type}</span>
+                                <span>${item.hours.toFixed(2)}hrs / <strong>${formatMoney(item.wage)}</strong></span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            container.appendChild(subDiv);
+        });
+
+        const exportBtn = document.createElement('button');
+        exportBtn.className = 'btn btn-outline';
+        exportBtn.style.cssText = 'margin-top: 12px; font-size: 13px;';
+        exportBtn.setAttribute('data-i18n', 'btnExportCSV');
+        exportBtn.innerText = '📊 匯出班表與薪資報表 (CSV)';
+        exportBtn.onclick = exportToCSV;
+        container.appendChild(exportBtn);
     }
 
     function toggleAccordion(type) {
@@ -1276,6 +1371,13 @@
         const isVisible = content.style.display === 'block';
         content.style.display = isVisible ? 'none' : 'block';
         arrow.innerText = isVisible ? '▼' : '▲';
+    }
+
+    // 子下拉開合控制
+    function toggleSubAccordion(subId) {
+        const content = document.getElementById(subId);
+        const isVisible = content.style.display === 'block';
+        content.style.display = isVisible ? 'none' : 'block';
     }
 
     async function copyBackup() {
