@@ -310,6 +310,7 @@
         </div>
     </div>
 
+    <!-- 固定房租支出明細 (雙層下拉) -->
     <div style="margin-bottom: 16px;">
         <div class="accordion-header" onclick="toggleAccordion('fixed-expense')">
             <span><span data-i18n="secFixedExpenseList">固定房租支出明細</span> <span id="fixed-expense-summary-count">(0週 / $0.00)</span></span>
@@ -1126,6 +1127,7 @@
         let totalWage = 0;
         let totalHours = 0;
         let activeWeeks = new Set();
+        let monthActiveWeeks = {}; // 紀錄各月份對應的週次
         const sortedKeys = Object.keys(shiftData).sort();
 
         const shiftTypeMap = {
@@ -1145,8 +1147,17 @@
             const shift = shiftData[dateStr];
             if (shift && shift.type !== 'none') {
                 const d = new Date(dateStr + 'T00:00:00');
-                if (d.getFullYear() === selectedSummaryYear && (d.getMonth() + 1) === selectedSummaryMonth) {
-                    activeWeeks.add(`${d.getFullYear()}-W${getWeekNumber(d)}`);
+                const yKey = d.getFullYear();
+                const mKey = d.getMonth() + 1;
+                const monthStr = `${yKey}-${String(mKey).padStart(2, '0')}`;
+                
+                const weekStr = `${yKey}-W${getWeekNumber(d)}`;
+                activeWeeks.add(weekStr);
+                
+                if (!monthActiveWeeks[monthStr]) monthActiveWeeks[monthStr] = new Set();
+                monthActiveWeeks[monthStr].add(weekStr);
+
+                if (yKey === selectedSummaryYear && mKey === selectedSummaryMonth) {
                     const hours = calculateShiftHours(shift.start, shift.end, shift.breakMin);
                     totalHours += hours;
 
@@ -1165,7 +1176,8 @@
         // 渲染「已排定班表明細」子下拉（依月份分組）
         renderShiftGroupedList(sortedKeys, base, casual, sundayLoad, doubleLoad, otThreshold, shiftTypeMap);
 
-        renderFixedExpenseList(activeWeeks.size, rent);
+        // 渲染「固定房租支出明細」雙層下拉（依月份分組算週次）
+        renderFixedExpenseGroupedList(monthActiveWeeks, rent);
         
         // 渲染「當日支出明細」子下拉（依月份分組）
         renderDailyExpenseGroupedList();
@@ -1178,9 +1190,16 @@
             }
         });
 
+        // 計算選中月份的總房租支出
+        const selMonthStr = `${selectedSummaryYear}-${String(selectedSummaryMonth).padStart(2, '0')}`;
+        const selMonthWeeksCount = monthActiveWeeks[selMonthStr] ? monthActiveWeeks[selMonthStr].size : 0;
+        // 若該月份完全沒有排班但有設定房租，至少預設對應本月有計算或維持動態，此處依選中月有幾週就算幾週，若無排班週則預設 0 或 4 視情況，若保持原邏輯：若無排班則用總activeWeeks平均或0
         const totalWeeksCount = Math.max(1, activeWeeks.size);
-        const totalRentExpenses = rent * totalWeeksCount;
-        const totalExpenses = totalRentExpenses + totalDailyExpenses;
+        const totalRentExpenses = rent * (monthActiveWeeks[selMonthStr] ? monthActiveWeeks[selMonthStr].size : (activeWeeks.size > 0 ? 0 : 4)); 
+        // 為了財務總結精準對應選中月份，我們計算選中月的房租
+        const currentMonthRent = rent * (monthActiveWeeks[selMonthStr] ? monthActiveWeeks[selMonthStr].size : 0);
+        const totalExpenses = currentMonthRent + totalDailyExpenses;
+        
         const totalPpe = activeWeeks.size * ppe;
         const gross = totalWage + totalPpe;
         const tax = gross * (taxRate / 100);
@@ -1213,21 +1232,49 @@
         document.getElementById('backup-data').value = btoa(encodeURIComponent(JSON.stringify({ shifts: shiftData, expenses: dailyExpenses })));
     }
 
-    function renderFixedExpenseList(weeksCount, rent) {
+    // 依月份分組渲染：固定房租支出明細（雙層架構）
+    function renderFixedExpenseGroupedList(monthActiveWeeks, rent) {
         const container = document.getElementById('fixed-expense-container');
         container.innerHTML = '';
-        const totalWeeks = Math.max(1, weeksCount);
-        document.getElementById('fixed-expense-summary-count').innerText = `(${totalWeeks}週 / ${formatMoney(rent * totalWeeks)})`;
 
-        if (rent <= 0) {
+        let grandWeeks = 0;
+        let monthKeys = Object.keys(monthActiveWeeks).sort().reverse();
+
+        monthKeys.forEach(mKey => {
+            grandWeeks += monthActiveWeeks[mKey].size;
+        });
+
+        const grandTotalRent = rent * grandWeeks;
+        document.getElementById('fixed-expense-summary-count').innerText = `(${grandWeeks}週 / ${formatMoney(grandTotalRent)})`;
+
+        if (rent <= 0 || monthKeys.length === 0) {
             container.innerHTML = `<div class="empty-text">${translations[currentLang].emptyFixedExpenseMsg}</div>`;
             return;
         }
 
-        const el = document.createElement('div');
-        el.className = 'shift-item';
-        el.innerHTML = `<span>每週預估房租</span><span><strong>${formatMoney(rent)}</strong> × ${totalWeeks}週 = <strong>${formatMoney(rent * totalWeeks)}</strong></span>`;
-        container.appendChild(el);
+        monthKeys.forEach(mKey => {
+            const [y, m] = mKey.split('-');
+            const weeksSet = monthActiveWeeks[mKey];
+            const weeksCount = weeksSet.size;
+            const monthRentTotal = rent * weeksCount;
+
+            const subId = `sub-rent-${mKey}`;
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-accordion';
+            subDiv.innerHTML = `
+                <div class="sub-accordion-header" onclick="toggleSubAccordion('${subId}')">
+                    <span>📅 ${y}年${parseInt(m)}月 (${weeksCount}週)</span>
+                    <span><strong>${formatMoney(monthRentTotal)}</strong> ▼</span>
+                </div>
+                <div class="sub-accordion-content" id="${subId}">
+                    <div class="shift-item">
+                        <span>每週固定房租</span>
+                        <span><strong>${formatMoney(rent)}</strong> × ${weeksCount}週 = <strong>${formatMoney(monthRentTotal)}</strong></span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(subDiv);
+        });
     }
 
     // 依月份分組渲染：當日支出明細紀錄
@@ -1255,7 +1302,6 @@
             return;
         }
 
-        // 依照月份由新到舊排序
         const sortedMonths = Object.keys(groups).sort().reverse();
 
         sortedMonths.forEach(mKey => {
@@ -1268,7 +1314,7 @@
             subDiv.className = 'sub-accordion';
             subDiv.innerHTML = `
                 <div class="sub-accordion-header" onclick="toggleSubAccordion('${subId}')">
-                    <span>📅 ${y}年${parseInt(m)}月 (${monthItems.pushed || monthItems.length}筆)</span>
+                    <span>📅 ${y}年${parseInt(m)}月 (${monthItems.length}筆)</span>
                     <span><strong>${formatMoney(monthTotal)}</strong> ▼</span>
                 </div>
                 <div class="sub-accordion-content" id="${subId}">
@@ -1373,7 +1419,6 @@
         arrow.innerText = isVisible ? '▼' : '▲';
     }
 
-    // 子下拉開合控制
     function toggleSubAccordion(subId) {
         const content = document.getElementById(subId);
         const isVisible = content.style.display === 'block';
